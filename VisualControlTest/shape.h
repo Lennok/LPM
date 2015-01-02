@@ -33,15 +33,6 @@ namespace VisualControlLib
 	const double PI = 3.141592653589793238462;
 
 
-	/// Ranking features: Roundness, Rectangularity, Triangularity, Number of angles
-	const double prototypesFeatures[4][4] = {
-			{ 0.56, 0.51, 1, 0.375 },
-			{ 0.79, 1, 0.75, 0.5 },
-			{ 0.83, 0.75, 0.69, 0.75 },
-			{ 0.9, 0.77, 0.68, 1 },
-	};
-
-
 	const double prototypesFactors[4][4] = {
 			{ 1, 1, 1.5, 0.8 },
 			{ 1, 1.5, 1, 1 },
@@ -66,11 +57,14 @@ namespace VisualControlLib
 		void mergeContours(std::vector<cv::Point> &contour);
 
 	public:
+		static int prototypesFeatures[4][4];
 		static void calculateFeatures(std::vector<cv::Point> &contour, std::map<std::string, double> &features);
 		static int classifyShape(std::vector<cv::Point> &contour, double threshold);
 		static int detectCentralShape(cv::Mat &image, cv::Point2f center, double radius, int threshold);
 
 	};
+
+	
 }
 
 #endif // SHAPE_H

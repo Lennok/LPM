@@ -31,7 +31,6 @@ using System.Windows.Forms;
 using System.Threading;
 
 using WI232Lib;
-using OSDDataLib;
 
 
 using System.Diagnostics;
@@ -110,7 +109,7 @@ namespace UAVSensorControl
 #endregion
 
 #region Global Variables
-        private NaviControl control = new NaviControl();
+        private OSDDataLib.NaviControl control = new OSDDataLib.NaviControl();
         private VisualControlWrapper visualControl=null;
         private VisualControlWrapper visualControl2= null;
         private RealTimeData graph = new RealTimeData();
@@ -258,7 +257,7 @@ namespace UAVSensorControl
             dataGridView1[0, 1].Style.BackColor = Color.Khaki;
             foreach (DataGridViewColumn col in dataGridView1.Columns) col.SortMode = DataGridViewColumnSortMode.NotSortable;
 
-            control.FlightCTRLDataReceived += new FlightCTRLDataHandler(port_DataReceived);  //Eventhandler zum Empfang der Antwortdaten von der Rohne. Werden nicht ausgewertet
+            control.FlightCTRLDataReceived += new OSDDataLib.FlightCTRLDataHandler(port_DataReceived);  //Eventhandler zum Empfang der Antwortdaten von der Rohne. Werden nicht ausgewertet
 
             //initialize to GoPro
             comboCameraType.SelectedIndex = 0;
@@ -1474,6 +1473,22 @@ namespace UAVSensorControl
                             visualControl2.setShowSettings(e.NewValue == CheckState.Checked ? true : false);
                         }
                         break;
+                    case 4:
+                        //show saved image
+                        visualControl.setShowImage(e.NewValue == CheckState.Checked ? true : false);
+                        if (cbShowCompare.Checked)
+                        {
+                            visualControl2.setShowImage(e.NewValue == CheckState.Checked ? true : false);
+                        }
+                        break;
+                    case 5:
+                        //show saved image
+                        visualControl.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
+                        if (cbShowCompare.Checked)
+                        {
+                            visualControl2.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -1546,7 +1561,7 @@ namespace UAVSensorControl
         }
 
         short osdAltitudeStart = short.MinValue;
-        private void myOSDDataHandler(Object sender, OSDData data, Boolean dataValid)
+        private void myOSDDataHandler(Object sender, OSDDataLib.OSDData data, Boolean dataValid)
         {            
             if(dataValid)
             {
@@ -1554,11 +1569,11 @@ namespace UAVSensorControl
                 {
                     osdAltitudeStart = data.Altimeter;
                 }
-                OSDData newData = data;
+                OSDDataLib.OSDData newData = data;
 
                 data.Altimeter = (short)(data.Altimeter - osdAltitudeStart);
 
-                copterData.osdBuffer.Enqueue(new KeyValuePair<DateTime, OSDData>(DateTime.Now, data));
+                copterData.osdBuffer.Enqueue(new KeyValuePair<DateTime, OSDDataLib.OSDData>(DateTime.Now, data));
                 btStartOSDData.BackColor = SystemColors.Control;
             }
             else
@@ -1875,14 +1890,14 @@ namespace UAVSensorControl
 
                             if (entrys.Length >= 5)
                             {
-                                OSDData osd = new OSDData();
+                                OSDDataLib.OSDData osd = new OSDDataLib.OSDData();
                                 osd.Altimeter = short.Parse(entrys[1]);
                                 osd.AngleNick = sbyte.Parse(entrys[2]);
                                 osd.AngleRoll = sbyte.Parse(entrys[3]);
                                 osd.Gas = byte.Parse(entrys[4]);
 
 
-                                KeyValuePair<DateTime, OSDDataLib.OSDData> newEntry = new KeyValuePair<DateTime, OSDData>(new DateTime((long)double.Parse(entrys[0]) * 10000), osd);
+                                KeyValuePair<DateTime, OSDDataLib.OSDData> newEntry = new KeyValuePair<DateTime, OSDDataLib.OSDData>(new DateTime((long)double.Parse(entrys[0]) * 10000), osd);
 
                                 replayData.osdBuffer.Enqueue(newEntry);
                             }
@@ -1957,6 +1972,8 @@ namespace UAVSensorControl
                 
             }
         }
+
+      
 
     }
 #endregion

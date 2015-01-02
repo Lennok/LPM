@@ -1,3 +1,6 @@
+#ifndef VISUAL_CONTROL_LIB
+#define VISUAL_CONTROL_LIB
+
 #include "VisualControl.h"
 #include <msclr/marshal_cppstd.h>
 
@@ -48,6 +51,8 @@ namespace VisualControlLib
 		int setShowCannyImage(bool show);
 		int setShowResultImage(bool show);
 		int setShowSettings(bool show);
+		int setShowImage(bool show);
+		int setShowFigureCharasteristics(bool show);
 		str_VisualData doDetection();
 		void setCalculationParams(str_CalibrationData calibrationData);
 		void setVideoLogging(bool log, System::String^ logDirectory);
@@ -62,3 +67,5 @@ namespace VisualControlLib
 		//void mainLoop();
 	};
 }
+
+#endif

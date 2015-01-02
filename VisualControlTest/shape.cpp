@@ -4,6 +4,15 @@
 
 using namespace VisualControlLib;
 
+//init static member
+/// Ranking features: Roundness, Rectangularity, Triangularity, Number of angles
+int Shape::prototypesFeatures[][4] = {
+		{ 56, 51, 100, 37 },		//Triangle
+		{ 79, 100, 75, 50 },		//Square
+		{ 83, 75, 69, 75 },			//Hexagon
+		{ 90, 77, 68, 100 },		//Circle
+};
+
 Shape::Shape(std::vector<cv::Point> &contour, int type)
 {
 	shapeContour = contour;
@@ -138,7 +147,6 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 {
 	std::map<std::string, double> features;
 
-
 	calculateFeatures(contour, features);
 
 	const double featuresValues[4] = {
@@ -155,7 +163,7 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 	if (features["area"] > MINIMAL_AREA && features["isClosed"] == true && features["eccentricity"] < 0.03) {
 		for (int shape_index = 0; shape_index<4; ++shape_index) {
 			for (int feature_index = 0; feature_index<4; ++feature_index) {
-				resultDistance[shape_index] += abs(featuresValues[feature_index] - prototypesFeatures[shape_index][feature_index]);
+				resultDistance[shape_index] += abs(featuresValues[feature_index] - (Shape::prototypesFeatures[shape_index][feature_index]/100.0));
 			}
 		}
 		double minValue = 10;
@@ -175,8 +183,8 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 	else {
 		shapeType = SHAPE_NONE;
 	}
-
 	return shapeType;
+	 
 }
 
 int Shape::detectCentralShape(cv::Mat &image, cv::Point2f center, double radius, int threshold)

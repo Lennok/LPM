@@ -22,6 +22,8 @@ VisualControl::VisualControl(int CameraIndex)
 	ShowGrayImage = false;
 	ShowResultImage = false;
 	showSettings = false;
+	showFigureCharacteristics = false;
+	showSingleImage = false;
 	mPlaformAngle = 0;
 	mPlatformAltitude = 0;
 	mPlatformOffsetX = 0;
@@ -51,6 +53,10 @@ VisualControl::VisualControl(int CameraIndex)
 	RESULT_WINDOW = "Result" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	GRAY_WINDOW = "Gray" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	SETTINGS_WINDOW = "Settings" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
+	CIRCLE_CHARACTERISTIC_WINDOW = "Circle Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
+	SQUARE_CHARACTERISTIC_WINDOW = "Square Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
+	HEXAGON_CHARACTERISTIC_WINDOW = "Hexagon Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
+	TRIANGLE_CHARACTERISTIC_WINDOW = "Triangle Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 
 	capture = NULL;
 
@@ -128,6 +134,84 @@ int  VisualControl::setShowSettings(bool show)
 	return 0;
 }
 
+int VisualControl::setShowImage(bool show)
+{
+	showSingleImage = show;
+	if (show)
+	{
+		//open file dialog and get path to image
+		wchar_t file[256] = {0};
+		OPENFILENAME openFileDialog;
+		ZeroMemory(&openFileDialog, sizeof(openFileDialog));
+		openFileDialog.lStructSize = sizeof(openFileDialog);
+		openFileDialog.hwndOwner = NULL;
+		openFileDialog.lpstrFile = file;
+		openFileDialog.nMaxFile = sizeof(file);
+		openFileDialog.lpstrFilter = L"All\0*.*\0Image\0*.jpg\0";
+		openFileDialog.nFilterIndex = -1;
+		openFileDialog.lpstrFileTitle = NULL;
+		openFileDialog.nMaxFileTitle = 0;
+		openFileDialog.lpstrInitialDir = NULL;
+		openFileDialog.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+		if(GetOpenFileName(&openFileDialog))
+		{
+			std:wstring wideString (openFileDialog.lpstrFile);
+			mImageFile = std::string(wideString.begin(), wideString.end());
+			cv::Mat frame = cv::imread(mImageFile);
+			cv::resize(frame,original_single_frame, cv::Size(640, 480));
+		}
+		else
+		{
+			showSingleImage = false;
+		}
+
+	}
+	return 0;
+}
+int VisualControl::setShowFigureCharasteristics(bool show)
+{
+	showFigureCharacteristics = show;
+	if (show)
+	{
+		//prototypesFeatures[4][4] -> Triangle, Square, Hexagon, Circle
+		//2nd Dimension: Roundness, Rectangularity, Triangularity, Number of angles
+
+		cvNamedWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
+		createTrackbar("Roundness:", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][0], 100);
+		createTrackbar("Rectangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][1], 100);
+		createTrackbar("Triangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][2], 100);
+		createTrackbar("Number of angles", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][3], 100);
+
+		cvNamedWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
+		createTrackbar("Roundness:", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][0], 100);
+		createTrackbar("Rectangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][1], 100);
+		createTrackbar("Triangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][2], 100);
+		createTrackbar("Number of angles", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][3], 100);
+
+		
+		cvNamedWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
+		createTrackbar("Roundness:", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][0], 100);
+		createTrackbar("Rectangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][1], 100);
+		createTrackbar("Triangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][2], 100);
+		createTrackbar("Number of angles", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][3], 100);
+
+		cvNamedWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
+		createTrackbar("Roundness:", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][0], 100);
+		createTrackbar("Rectangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][1], 100);
+		createTrackbar("Triangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][2], 100);
+		createTrackbar("Number of angles", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][3], 100);
+	}
+	else
+	{
+		cvDestroyWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str());
+		cvDestroyWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str());
+		cvDestroyWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str());
+		cvDestroyWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str());
+	}	
+	return 0;
+}
+
 //int VisualControl::startPlatformDetection()
 //{
 //	if (!(mainLoopRunning==1))
@@ -166,7 +250,8 @@ int  VisualControl::setShowSettings(bool show)
 void VisualControl::preprocessImage(Mat &frame) {
 
 	Mat hsv, yuv;
-	vector<Mat> channels_hsv, channels_yuv;
+	vector<Mat> channels_hsv;
+	vector<Mat> channels_yuv;
 	src = frame.clone();
 	drawing = src.clone();
 
@@ -195,7 +280,7 @@ void VisualControl::preprocessImage(Mat &frame) {
 	if (ShowCannyImage)
 	{
 		imshow(CANNY_WINDOW, frame);
-	}	
+	}
 }
 
 
@@ -207,6 +292,11 @@ void VisualControl::processContours(Mat &frame)
 	/// Find contours
 	findContours(frame, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
+	int counter = 0;
+	for (vector<vector<Point> >::iterator it = contours.begin(); it != contours.end(); ++it)
+	{
+		counter ++;
+	}
 	/// Clear the vector with forms
 	shapes.clear();
 
@@ -359,13 +449,14 @@ void VisualControl::drawShapes() {
 }
 
 void VisualControl::pushShape_1(vector<Shape> &items) {
-	for each(Shape item in items) {
+	for(int i = 0; i< items.size(); i++)
+	{
 		double eucliadianDistance = 0;
-		bool centerIsInside = platformShape.centerIsInside(item.shapeContour, eucliadianDistance);
-		double area_ratio = centerShape.shapeArea / item.shapeArea;
+		bool centerIsInside = platformShape.centerIsInside(items[i].shapeContour, eucliadianDistance);
+		double area_ratio = centerShape.shapeArea / items[i].shapeArea;
 
 		if (centerIsInside && eucliadianDistance > min_eucl_dist && area_ratio < 2 && area_ratio > 0.5) {
-			shapes.push_back(item);
+			shapes.push_back(items[i]);
 			break;
 		}
 	}
@@ -415,14 +506,15 @@ bool VisualControl::simpleDetection() {
 }
 
 void VisualControl::pushShape_2(vector<Shape> &items, Shape &center) {
-	for each(Shape item in items) {
+	for(int i = 0; i< items.size(); i++)
+	{
 		double eucliadianDistance = 0;
 
-		Point diff = item.shapeCenter - center.shapeCenter;
+		Point diff = items[i].shapeCenter - center.shapeCenter;
 		eucliadianDistance = sqrt((double)(diff.x*diff.x + diff.y*diff.y));
 
 		if (eucliadianDistance <= center.shapeRadius*raduis_coef / 100.0 && eucliadianDistance > 10) {
-			shapes.push_back(item);
+			shapes.push_back(items[i]);
 		}
 	}
 }
@@ -432,11 +524,13 @@ bool VisualControl::centerFirstDetection() {
 	platformShape = Shape();
 
 	int centerCrossingCount = 32000;
-	for each(Shape item in circles) {
-		int count = Shape::detectCentralShape(gray_src, item.shapeCenter, item.shapeRadius*center_detect_radius, center_detect_threshold);
+	for(int i = 0; i< circles.size(); i++)
+	{
+		int count = Shape::detectCentralShape(gray_src, circles[i].shapeCenter, circles[i].shapeRadius*center_detect_radius, center_detect_threshold);
 
-		if (count < centerCrossingCount /*&& item.shapeArea > centerShape.shapeArea*/) {
-			centerShape = item;
+		if (count < centerCrossingCount /*&& item.shapeArea > centerShape.shapeArea*/)
+		{
+			centerShape = circles[i];
 			centerCrossingCount = count;
 		}
 	}
@@ -470,42 +564,43 @@ int VisualControl::processEdgeShapes() {
 		return -1;
 	}
 
-	for each(Shape item in shapes) {
-		switch (item.shapeType) {
+	for(int i = 0; i< shapes.size(); i++)
+	{
+		switch (shapes[i].shapeType) {
 		case SHAPE_TRIANGLE:
 
 			if (circleShape.shapeArea > 0) {
-				is_inside = circleShape.centerIsInside(item.shapeContour, eucliadianDistance);
+				is_inside = circleShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
 			}
 			else {
 				is_inside = false;
 			}
-			if (item.shapeArea > triangleShape.shapeArea && !is_inside) {
-				triangleShape = item;
+			if (shapes[i].shapeArea > triangleShape.shapeArea && !is_inside) {
+				triangleShape = shapes[i];
 			}
 			one_shape_found = true;
 			break;
 		case SHAPE_SQUARE:
-			if (item.shapeArea > squareShape.shapeArea) {
-				squareShape = item;
+			if (shapes[i].shapeArea > squareShape.shapeArea) {
+				squareShape = shapes[i];
 			}
 			one_shape_found = true;
 			break;
 		case SHAPE_HEXAGON:
-			if (item.shapeArea > hexagonShape.shapeArea) {
-				hexagonShape = item;
+			if (shapes[i].shapeArea > hexagonShape.shapeArea) {
+				hexagonShape = shapes[i];
 			}
 			one_shape_found = true;
 			break;
 		case SHAPE_CIRCLE:
 			if (hexagonShape.shapeArea > 0) {
-				is_inside = hexagonShape.centerIsInside(item.shapeContour, eucliadianDistance);
+				is_inside = hexagonShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
 			}
 			else {
 				is_inside = false;
 			}
-			if (item.shapeArea > circleShape.shapeArea && !is_inside) {
-				circleShape = item;
+			if (shapes[i].shapeArea > circleShape.shapeArea && !is_inside) {
+				circleShape = shapes[i];
 			}
 			one_shape_found = true;
 			break;
@@ -628,12 +723,13 @@ void VisualControl::calculatePlatformAngle() {
 			int min = *min_element(angles.begin(), angles.end());
 			int max = *max_element(angles.begin(), angles.end());
 			if ((max - min) > 300) {
-				for each(auto item in angles) {
-					if ((item + 300) < max) {
-						average += item + 360;
+				for(int i = 0; i< angles.size(); i++)
+				{
+					if ((angles[i] + 300) < max) {
+						average += angles[i] + 360;
 					}
 					else {
-						average += item;
+						average += angles[i];
 					}
 				}
 				average /= angles.size();
@@ -696,16 +792,23 @@ void VisualControl::doDetection()
 		Size outputSize(frameWidth, frameHeight);
 		outputVideo = new VideoWriter(this->logDirectory + "\\video.avi", CV_FOURCC('i', 'Y', 'U', 'V'), 10, outputSize, true);
 	}
-
-	/// get shot
-	working_frame = cvQueryFrame(capture);
-	if(working_frame.rows == 0 ||working_frame.cols==0)
+	
+	/// get shot	
+	if (!showSingleImage)
+	{	
+		working_frame = cvQueryFrame(capture);
+	}
+	else
+	{
+		working_frame = original_single_frame;
+	}
+	//need else, when working_frame is changed!
+	if(working_frame.rows == 0 ||working_frame.cols==0 || working_frame.channels() != 3)
 	{
 		return;
 	}
 	///time open
 	//double t = (double)getTickCount();
-
 
 	preprocessImage(working_frame);
 	processContours(working_frame);

@@ -87,6 +87,16 @@ int VisualControlWrapper::setShowSettings(bool show)
 	return this->visContrHandle->setShowSettings(show);
 }
 
+int VisualControlWrapper::setShowImage(bool show)
+{
+	return this->visContrHandle->setShowImage(show);
+}
+
+int VisualControlWrapper::setShowFigureCharasteristics(bool show)
+{
+	return this->visContrHandle->setShowFigureCharasteristics(show);
+}
+
 str_VisualData VisualControlWrapper::doDetection()
 {
 	str_VisualData data;

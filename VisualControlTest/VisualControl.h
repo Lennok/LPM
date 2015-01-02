@@ -6,7 +6,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
+//
+#include <Windows.h>
 
 
 #include "shape.h"
@@ -35,6 +36,9 @@ namespace VisualControlLib
 		int setShowCannyImage(bool show);
 		int setShowResultImage(bool show);
 		int setShowSettings(bool show);
+		int setShowImage(bool show);
+		int setShowFigureCharasteristics(bool show);
+
 
 		//main loop
 		void doDetection();
@@ -50,10 +54,14 @@ namespace VisualControlLib
 		int mainLoopRunning;
 		bool mDataValid;
 		int mCameraIndex;
+		std::string mImageFile;
 		bool ShowGrayImage;
 		bool ShowCannyImage;
 		bool ShowResultImage;
 		bool showSettings;
+		bool showSingleImage;
+		bool showFigureCharacteristics;
+
 		//calculation parameter
 		double param1;
 		double param2;
@@ -67,13 +75,17 @@ namespace VisualControlLib
 		string VisualControl::RESULT_WINDOW;
 		string VisualControl::GRAY_WINDOW;
 		string VisualControl::SETTINGS_WINDOW;
+		string VisualControl::CIRCLE_CHARACTERISTIC_WINDOW;
+		string VisualControl::SQUARE_CHARACTERISTIC_WINDOW;
+		string VisualControl::HEXAGON_CHARACTERISTIC_WINDOW;
+		string VisualControl::TRIANGLE_CHARACTERISTIC_WINDOW;
 
 
 		CvCapture* capture;
 
 		/// captures frames
 		//Mat frame, gray_src, src, drawing;
-		Mat  gray_src, src, drawing, working_frame;
+		Mat  gray_src, src, drawing, working_frame, original_single_frame;
 
 		/// Array with figures
 		vector<Shape> shapes;
