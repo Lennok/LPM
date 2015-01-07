@@ -3,7 +3,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
+//#include <opencv2/legacy/legacy.hpp>
 using namespace cv;
 using namespace std;
 using namespace VisualControlLib;;
@@ -178,29 +178,33 @@ int VisualControl::setShowFigureCharasteristics(bool show)
 		//2nd Dimension: Roundness, Rectangularity, Triangularity, Number of angles
 
 		cvNamedWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
-		createTrackbar("Roundness:", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][0], 100);
-		createTrackbar("Rectangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][1], 100);
+		//createTrackbar("Roundness:", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][0], 100);
+		//createTrackbar("Rectangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][1], 100);
 		createTrackbar("Triangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][2], 100);
-		createTrackbar("Number of angles", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][3], 100);
+		//createTrackbar("Number of angles", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][3], 100);
+		cvMoveWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str(), 0 , 0);
 
 		cvNamedWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
-		createTrackbar("Roundness:", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][0], 100);
+		//createTrackbar("Roundness:", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][0], 100);
 		createTrackbar("Rectangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][1], 100);
-		createTrackbar("Triangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][2], 100);
-		createTrackbar("Number of angles", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][3], 100);
-
+		//createTrackbar("Triangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][2], 100);
+		//createTrackbar("Number of angles", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][3], 100);
+		cvMoveWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str(), 200 , 0);
 		
 		cvNamedWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
-		createTrackbar("Roundness:", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][0], 100);
+		/*createTrackbar("Roundness:", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][0], 100);
 		createTrackbar("Rectangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][1], 100);
 		createTrackbar("Triangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][2], 100);
-		createTrackbar("Number of angles", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][3], 100);
+		createTrackbar("Number of angles", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][3], 100);*/
+		cvMoveWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), 400 , 0);
 
 		cvNamedWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
 		createTrackbar("Roundness:", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][0], 100);
-		createTrackbar("Rectangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][1], 100);
+	/*	createTrackbar("Rectangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][1], 100);
 		createTrackbar("Triangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][2], 100);
-		createTrackbar("Number of angles", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][3], 100);
+		createTrackbar("Number of angles", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][3], 100);*/
+		cvMoveWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), 600 , 0);
+
 	}
 	else
 	{
@@ -247,6 +251,20 @@ int VisualControl::setShowFigureCharasteristics(bool show)
 ///////////////////////////////////////////////////////////////////
 ///private functions 
 ////////////////////////////////////////////////////////////////////
+void VisualControl::Intensity(Mat inputArray, double* energy, double* entropy, double* contrast)
+{
+	//needs "opencv_legecy.lib"
+	//Direction 0°
+	//LdGray = 7
+
+	/*IplImage lagacyImage = inputArray;
+	CvGLCM* coocMatrix = cvCreateGLCM(&lagacyImage,7);
+	*energy = cvGetGLCMDescriptor(coocMatrix, 0, CV_GLCMDESC_ENERGY);
+	*entropy = cvGetGLCMDescriptor(coocMatrix, 0, CV_GLCMDESC_ENTROPY);
+	*contrast = cvGetGLCMDescriptor(coocMatrix, 0, CV_GLCMDESC_CONTRAST);*/
+}
+
+
 void VisualControl::preprocessImage(Mat &frame) {
 
 	Mat hsv, yuv;
@@ -255,12 +273,32 @@ void VisualControl::preprocessImage(Mat &frame) {
 	src = frame.clone();
 	drawing = src.clone();
 
+	
+
 	///convert to grayscale
 	cvtColor(frame, hsv, CV_RGB2HSV);
 	cvtColor(frame, yuv, CV_RGB2YUV);
 	split(hsv, channels_hsv);
 	split(yuv, channels_yuv);
+	double energy, entropy, contrast;
+	Intensity(channels_hsv[1],&energy, &entropy, &contrast);
 
+	/*if(!showSettings)
+	{
+		cv::Scalar meanS = mean(channels_hsv[1]);
+		cv::Scalar meanV, deviationV;
+		meanStdDev(channels_hsv[2], meanV, deviationV);
+		cv::Scalar meanY,deviationY;
+		meanStdDev(channels_yuv[0],meanY,deviationY);
+		
+		//no functions for entropy, energy and contrast
+		cv::Scalar entropyV = mean(channels_hsv[1]);
+		cv::Scalar entropyY = mean(channels_hsv[1]);
+		cv::Scalar energyV = mean(channels_hsv[1]);
+		cv::Scalar contrastV = mean(channels_hsv[1]);
+		cv::Scalar energyY = mean(channels_hsv[1]);
+		cv::Scalar contrastY = mean(channels_hsv[1]);
+	}*/
 	Mat temp;
 	addWeighted(channels_hsv[1], 0.5, channels_hsv[2], 0.5, 0, temp);
 	multiply(temp, channels_yuv[0], frame, 1.0 / color_coeff);
@@ -288,8 +326,8 @@ void VisualControl::processContours(Mat &frame)
 {
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
-
-	/// Find contours
+	int count = 0;
+	/// Find contours	
 	findContours(frame, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 	int counter = 0;
@@ -299,43 +337,78 @@ void VisualControl::processContours(Mat &frame)
 	}
 	/// Clear the vector with forms
 	shapes.clear();
-
-	/// Fill shapes vector
-	for (int i = 0; i< contours.size(); i++)
+	if (showAllFigures)
 	{
-		/// Approximate contour to find border count
-		int shapeType = SHAPE_NONE;
-		shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0));
-
-
-		if (shapeType != SHAPE_NONE) {
-
-			if (shapes.size() == 0) {
-				Shape temp(contours[i], shapeType);
+		for (int i = 0; i< contours.size(); i++)
+		{
+			int shapeType = SHAPE_NONE;
+			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0), showFigureCharacteristics);
+						
+			Shape temp(contours[i], shapeType);
+			std::map<std::string, double> features;
+			temp.calculateFeatures(contours[i], features);
+			if (features["isClosed"] && temp.shapeType != SHAPE_NONE)
+			{
 				shapes.push_back(temp);
-			}
-			else {
-				bool isAdded = false;
+				count++;
+			}			
+		}
+		///Draw shapes
+		vector<vector<Point> > resultContours;
 
-				///check whether the circuit to any figure, if so, to absorb less a figure greater
-				for (int j = 0; j<shapes.size(); ++j) {
-					double eucliadianDistance = 0;
-					bool isInside = shapes[j].centerIsInside(contours[i], eucliadianDistance);
+		for (int i = 0; i<shapes.size(); ++i) {
+			resultContours.push_back(shapes[i].shapeContour);	
+			drawContours(drawing, resultContours, i,  SHAPE_COLORS[shapes[i].shapeType], 1, 8, hierarchy, 0, Point());
+		}
+		if (ShowResultImage)
+		{
+			imshow(RESULT_WINDOW, drawing);
+		}
+	}
+	else
+	{
+		/// Fill shapes vector
+		for (int i = 0; i< contours.size(); i++)
+		{
+			/// Approximate contour to find border count
+			int shapeType = SHAPE_NONE;
+			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0));
 
-					if (shapes[j].shapeType == shapeType && isInside && eucliadianDistance < min_eucl_dist) {
-						shapes[j].mergeContours(contours[i]);
-						isAdded = true;
-						break;
-					}
-				}
 
-				if (!isAdded) {
+			if (shapeType != SHAPE_NONE) {
+
+				if (shapes.size() == 0) {
 					Shape temp(contours[i], shapeType);
 					shapes.push_back(temp);
+				}
+				else 
+				{
+					bool isAdded = false;
+				
+				
+						///check whether the circuit to any figure, if so, to absorb less a figure greater
+						for (int j = 0; j<shapes.size(); ++j) {
+							double eucliadianDistance = 0;
+							bool isInside = shapes[j].centerIsInside(contours[i], eucliadianDistance);
+
+							if (shapes[j].shapeType == shapeType && isInside && eucliadianDistance < min_eucl_dist) {
+								shapes[j].mergeContours(contours[i]);
+								isAdded = true;
+								break;
+							}
+						}
+
+						if (!isAdded) {
+							Shape temp(contours[i], shapeType);
+							shapes.push_back(temp);
+						}
+
+				
 				}
 			}
 		}
 	}
+	
 }
 
 void VisualControl::processShapes() {
@@ -346,7 +419,8 @@ void VisualControl::processShapes() {
 	circles.clear();
 
 	/// Put shapes into formes arrays
-	for (int i = 0; i < shapes.size(); ++i) {
+	for (int i = 0; i < shapes.size(); ++i) 
+	{
 		switch (shapes[i].shapeType) {
 		case SHAPE_TRIANGLE:
 			triangles.push_back(shapes[i]);
@@ -391,6 +465,7 @@ void VisualControl::processShapes() {
 		mDataValid = false;
 	}
 }
+
 
 void VisualControl::drawShapes() {
 	shapes.clear();
@@ -809,21 +884,22 @@ void VisualControl::doDetection()
 	}
 	///time open
 	//double t = (double)getTickCount();
-
+	showAllFigures = true;
 	preprocessImage(working_frame);
 	processContours(working_frame);
 	processShapes();
 	/// Show in a window
 	if (ShowResultImage || this->mlogVideo)
 	{
-		drawShapes();
+		if (!showAllFigures)
+		{
+			drawShapes();
+		}
 		if (outputVideo != NULL && outputVideo->isOpened())
 		{
 			this->outputVideo->write( drawing);
 		}
 	}
-
-
 
 	/// Calculate time
 	//t = ((double)getTickCount() - t)/getTickFrequency();

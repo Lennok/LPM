@@ -7,11 +7,12 @@ using namespace VisualControlLib;
 //init static member
 /// Ranking features: Roundness, Rectangularity, Triangularity, Number of angles
 int Shape::prototypesFeatures[][4] = {
-		{ 56, 51, 100, 37 },		//Triangle
-		{ 79, 100, 75, 50 },		//Square
+		{ 56, 51, 85, 37 },		//Triangle
+		{ 79, 80, 75, 50 },		//Square
 		{ 83, 75, 69, 75 },			//Hexagon
-		{ 90, 77, 68, 100 },		//Circle
+		{ 80, 77, 68, 100 },		//Circle
 };
+
 
 Shape::Shape(std::vector<cv::Point> &contour, int type)
 {
@@ -129,6 +130,7 @@ void Shape::calculateFeatures(std::vector<cv::Point> &contour, std::map<std::str
 	else {
 		triangularity = 1 / (108 * affineMomentInvariant);
 	}
+	
 
 	features.clear();
 	features.insert(std::pair<std::string, double>("perimeter", perimeter));
@@ -141,8 +143,39 @@ void Shape::calculateFeatures(std::vector<cv::Point> &contour, std::map<std::str
 	features.insert(std::pair<std::string, double>("isClosed", isClosed));
 }
 
-
-
+int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold, bool methode)
+{
+	int shapeType = SHAPE_NONE;
+	if (methode == false)
+	{
+		shapeType = Shape::classifyShape(contour, threshold);
+	}
+	else
+	{
+		std::map<std::string, double> features;
+		calculateFeatures(contour, features);
+		if (features["area"] > 50 && features["isClosed"]&& features["eccentricity"] < 0.1)
+		{
+			if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
+			{
+				shapeType = SHAPE_TRIANGLE;
+			}
+			else if (features["rectangularity"] > Shape::prototypesFeatures[1][1]/100.0 && (features["sides"] == 4 || features["sides"] == 5))
+			{
+				shapeType = SHAPE_SQUARE;
+			}
+			else if (features["roundness"] > Shape::prototypesFeatures[3][0]/100.0 && features["sides"] == 8)
+			{
+				shapeType = SHAPE_CIRCLE;
+			}
+			else if (features["sides"] == 6 || features["sides"] == 7)
+			{
+				shapeType = SHAPE_HEXAGON;
+			}
+		}
+	}
+	return shapeType;
+}
 int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 {
 	std::map<std::string, double> features;
@@ -160,7 +193,7 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 
 	/// Classify shape
 	int shapeType = SHAPE_NONE;
-	if (features["area"] > MINIMAL_AREA && features["isClosed"] == true && features["eccentricity"] < 0.03) {
+	if (features["area"] > MINIMAL_AREA && features["isClosed"] == true && features["eccentricity"] < 0.2) {
 		for (int shape_index = 0; shape_index<4; ++shape_index) {
 			for (int feature_index = 0; feature_index<4; ++feature_index) {
 				resultDistance[shape_index] += abs(featuresValues[feature_index] - (Shape::prototypesFeatures[shape_index][feature_index]/100.0));
@@ -168,6 +201,7 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 		}
 		double minValue = 10;
 		double minIndex = 0;
+		
 		for (int i = 0; i<4; ++i) {
 			if (resultDistance[i] < minValue) {
 				minValue = resultDistance[i];
@@ -178,7 +212,6 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 			//qDebug() << minIndex+1 << " -> " << minValue;
 			shapeType = SHAPE_NONE + minIndex + 1;
 		}
-
 	}
 	else {
 		shapeType = SHAPE_NONE;

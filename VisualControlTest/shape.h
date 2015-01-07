@@ -20,7 +20,7 @@ namespace VisualControlLib
 	/// Define shapes colors
 
 	const cv::Scalar SHAPE_COLORS[7] = {
-		cv::Scalar(0, 0, 0),
+		cv::Scalar(200, 0, 150), // pink for SHAPE_NONE
 		cv::Scalar(28, 232, 0),
 		cv::Scalar(28, 247, 255),
 		cv::Scalar(212, 96, 0),
@@ -60,6 +60,7 @@ namespace VisualControlLib
 		static int prototypesFeatures[4][4];
 		static void calculateFeatures(std::vector<cv::Point> &contour, std::map<std::string, double> &features);
 		static int classifyShape(std::vector<cv::Point> &contour, double threshold);
+		static int classifyShape(std::vector<cv::Point> &contour, double threshold, bool method);
 		static int detectCentralShape(cv::Mat &image, cv::Point2f center, double radius, int threshold);
 
 	};
