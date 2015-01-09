@@ -12,6 +12,8 @@
 
 
 #include "shape.h"
+
+#include "iteration_return.h"
 using namespace cv;
 
 namespace VisualControlLib
@@ -131,6 +133,9 @@ namespace VisualControlLib
 		int processEdgeShapes();
 
 		void processShapes();
+		iteration_return_t * iterate_processShapes();
+		iteration_return_t * iterate_process_edge_shapes();
+
 		void drawShapes();
 
 		void pushShape_1(vector<Shape> &items);

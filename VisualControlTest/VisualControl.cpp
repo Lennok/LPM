@@ -3,6 +3,9 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
+#include "iteration_return.h"
+
 //#include <opencv2/legacy/legacy.hpp>
 using namespace cv;
 using namespace std;
@@ -530,14 +533,16 @@ void VisualControl::pushShape_1(vector<Shape> &items) {
 		bool centerIsInside = platformShape.centerIsInside(items[i].shapeContour, eucliadianDistance);
 		double area_ratio = centerShape.shapeArea / items[i].shapeArea;
 
-		if (centerIsInside && eucliadianDistance > min_eucl_dist && area_ratio < 2 && area_ratio > 0.5) {
+		if (centerIsInside && eucliadianDistance > min_eucl_dist && area_ratio < 2 && area_ratio > 0.5) 
+		{
 			shapes.push_back(items[i]);
 			break;
 		}
 	}
 }
 
-bool VisualControl::simpleDetection() {
+bool VisualControl::simpleDetection() 
+{
 	centerShape = Shape();
 	platformShape = Shape();
 	triangleShape = Shape();
@@ -545,14 +550,18 @@ bool VisualControl::simpleDetection() {
 	hexagonShape = Shape();
 	circleShape = Shape();
 
-	for (int circle_item = 0; circle_item < circles.size(); ++circle_item) {
-		for (int square_item = 0; square_item < squares.size(); ++square_item) {
+	for (int circle_item = 0; circle_item < circles.size(); ++circle_item) 
+	{
+		for (int square_item = 0; square_item < squares.size(); ++square_item) 
+		{
 			double eucliadianDistance = 0;
 			bool centerIsInside = circles[circle_item].centerIsInside(squares[square_item].shapeContour, eucliadianDistance);
 			double area_ratio = squares[square_item].shapeArea / circles[circle_item].shapeArea;
 
-			if (centerIsInside && eucliadianDistance < min_eucl_dist && area_ratio > 2.5) {
-				if (squares[square_item].shapeArea > platformShape.shapeArea && circles[circle_item].shapeArea > centerShape.shapeArea) {
+			if (centerIsInside && eucliadianDistance < min_eucl_dist && area_ratio > 2.5) 
+			{
+				if (squares[square_item].shapeArea > platformShape.shapeArea && circles[circle_item].shapeArea > centerShape.shapeArea) 
+				{
 					platformShape = squares[square_item];
 					platformShape.shapeType = SHAPE_PLATFORM;
 
@@ -564,7 +573,8 @@ bool VisualControl::simpleDetection() {
 	}
 
 	//Adding center and found a platform in an array of figures
-	if (platformShape.shapeArea > 0 && centerShape.shapeArea > 0) {
+	if (platformShape.shapeArea > 0 && centerShape.shapeArea > 0) 
+	{
 		shapes.push_back(platformShape);
 		shapes.push_back(centerShape);
 
@@ -575,7 +585,8 @@ bool VisualControl::simpleDetection() {
 
 		return true;
 	}
-	else {
+	else 
+	{
 		return false;
 	}
 }
@@ -629,11 +640,13 @@ bool VisualControl::centerFirstDetection() {
 	}
 }
 
-int VisualControl::processEdgeShapes() {
+int VisualControl::processEdgeShapes() 
+{
+
 	double eucliadianDistance = 0;
 	bool is_inside = false;
 	bool one_shape_found = false;
-
+	
 	if (shapes.size() == 0)
 	{
 		return -1;
@@ -641,47 +654,68 @@ int VisualControl::processEdgeShapes() {
 
 	for(int i = 0; i< shapes.size(); i++)
 	{
-		switch (shapes[i].shapeType) {
-		case SHAPE_TRIANGLE:
+		switch (shapes[i].shapeType) 
+		{
+			case SHAPE_TRIANGLE:
 
-			if (circleShape.shapeArea > 0) {
-				is_inside = circleShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
-			}
-			else {
-				is_inside = false;
-			}
-			if (shapes[i].shapeArea > triangleShape.shapeArea && !is_inside) {
-				triangleShape = shapes[i];
-			}
-			one_shape_found = true;
-			break;
-		case SHAPE_SQUARE:
-			if (shapes[i].shapeArea > squareShape.shapeArea) {
-				squareShape = shapes[i];
-			}
-			one_shape_found = true;
-			break;
-		case SHAPE_HEXAGON:
-			if (shapes[i].shapeArea > hexagonShape.shapeArea) {
-				hexagonShape = shapes[i];
-			}
-			one_shape_found = true;
-			break;
-		case SHAPE_CIRCLE:
-			if (hexagonShape.shapeArea > 0) {
-				is_inside = hexagonShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
-			}
-			else {
-				is_inside = false;
-			}
-			if (shapes[i].shapeArea > circleShape.shapeArea && !is_inside) {
-				circleShape = shapes[i];
-			}
-			one_shape_found = true;
-			break;
+				if (circleShape.shapeArea > 0) {
+					is_inside = circleShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
+				}
+				else 
+				{
+					is_inside = false;
+				}
+				if (shapes[i].shapeArea > triangleShape.shapeArea && !is_inside) 
+				{
+					triangleShape = shapes[i];
+				}
+				
+				one_shape_found = true;
+				break;
+
+			case SHAPE_SQUARE:
+				if (shapes[i].shapeArea > squareShape.shapeArea) 
+				{
+					squareShape = shapes[i];
+				}
+				
+				one_shape_found = true;
+				break;
+
+			case SHAPE_HEXAGON:
+				if (shapes[i].shapeArea > hexagonShape.shapeArea) 
+				{
+					hexagonShape = shapes[i];
+				}
+				
+				one_shape_found = true;
+				break;
+
+			case SHAPE_CIRCLE:
+				if (hexagonShape.shapeArea > 0) 
+				{
+					is_inside = hexagonShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
+				}
+				else 
+				{
+					is_inside = false;
+				}
+
+				if (shapes[i].shapeArea > circleShape.shapeArea && !is_inside)
+				{
+					circleShape = shapes[i];
+				}
+				
+				one_shape_found = true;
+				break;
 		}
 	}
 
+	if (one_shape_found)
+	{
+		return -1;
+	}
+	
 	if (one_shape_found)
 	{
 		return 0;
@@ -833,6 +867,208 @@ void VisualControl::calculatePlatformAngle() {
 		}
 
 	}
+}
+
+iteration_return_t * VisualControl::iterate_process_edge_shapes()
+{
+	double eucliadianDistance = 0;
+	bool is_inside = false;
+	bool one_shape_found = false;
+
+	bool found[4] = { false, false, false, false };
+	iteration_return_t * retVal = new iteration_return_t();
+
+
+	if (shapes.size() == 0)
+	{
+		retVal->state = NoEdgeShapesDetected;
+		return retVal;
+	}
+
+	for (int i = 0; i< shapes.size(); i++)
+	{
+		switch (shapes[i].shapeType)
+		{
+		case SHAPE_TRIANGLE:
+
+			if (circleShape.shapeArea > 0) {
+				is_inside = circleShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
+			}
+			else
+			{
+				is_inside = false;
+			}
+			if (shapes[i].shapeArea > triangleShape.shapeArea && !is_inside)
+			{
+				triangleShape = shapes[i];
+			}
+
+			found[0] = true;
+
+			one_shape_found = true;
+			break;
+
+		case SHAPE_SQUARE:
+			if (shapes[i].shapeArea > squareShape.shapeArea)
+			{
+				squareShape = shapes[i];
+			}
+
+			found[1] = true;
+
+			one_shape_found = true;
+			break;
+
+		case SHAPE_HEXAGON:
+			if (shapes[i].shapeArea > hexagonShape.shapeArea)
+			{
+				hexagonShape = shapes[i];
+			}
+
+			found[2] = true;
+
+			one_shape_found = true;
+			break;
+
+		case SHAPE_CIRCLE:
+			if (hexagonShape.shapeArea > 0)
+			{
+				is_inside = hexagonShape.centerIsInside(shapes[i].shapeContour, eucliadianDistance);
+			}
+			else
+			{
+				is_inside = false;
+			}
+
+			if (shapes[i].shapeArea > circleShape.shapeArea && !is_inside)
+			{
+				circleShape = shapes[i];
+			}
+
+			found[3] = true;
+
+			one_shape_found = true;
+			break;
+		}
+	}
+
+	if (!one_shape_found)
+	{
+		retVal->state = NoEdgeShapesDetected;
+		return retVal;
+	}
+	
+	for (int i = 1; i < 5; i++)
+	{
+		if (!found[i - 1])
+		{
+			switch (i)
+			{
+				case SHAPE_TRIANGLE:
+				{
+					iteration_not_detected triangular;
+					triangular.expected_type = TypeTriangle;
+
+					retVal->nr_of_no_detections++;
+					retVal->vector_not_detected.push_back(triangular);
+				}
+				break;
+
+
+				case SHAPE_SQUARE:
+				{
+					iteration_not_detected sqaure;
+					sqaure.expected_type = TypeRectangle;
+
+					retVal->nr_of_no_detections++;
+					retVal->vector_not_detected.push_back(sqaure);
+				}
+				break;
+				
+				case SHAPE_HEXAGON:
+				{
+					iteration_not_detected hexagon;
+					hexagon.expected_type = TypeHexagon;
+
+					retVal->nr_of_no_detections++;
+					retVal->vector_not_detected.push_back(hexagon);
+				}
+				break;
+				
+				case SHAPE_CIRCLE:
+				{
+					iteration_not_detected circle;
+					circle.expected_type = TypeCircle;
+
+					retVal->nr_of_no_detections++;
+					retVal->vector_not_detected.push_back(circle);
+				}
+				break;
+
+			}
+		}
+	}
+
+
+	return retVal;
+}
+
+iteration_return_t * VisualControl::iterate_processShapes()
+{
+	/// Clear formes arraysS
+	triangles.clear();
+	squares.clear();
+	hexagons.clear();
+	circles.clear();
+
+	/// Put shapes into formes arrays
+	for (int i = 0; i < shapes.size(); ++i)
+	{
+		switch (shapes[i].shapeType) {
+		case SHAPE_TRIANGLE:
+			triangles.push_back(shapes[i]);
+			break;
+		case SHAPE_SQUARE:
+			squares.push_back(shapes[i]);
+			break;
+		case SHAPE_HEXAGON:
+			hexagons.push_back(shapes[i]);
+			break;
+		case SHAPE_CIRCLE:
+			circles.push_back(shapes[i]);
+			break;
+		default:
+			break;
+		}
+	}
+
+	/// Clear shapes base arrays
+	shapes.clear();
+
+	/// Detect platform with simple method
+	if (simpleDetection()) {
+		//qDebug() << "Simple method";
+	}
+	else if (centerFirstDetection()) {
+		//qDebug() << "Center first method";
+	}
+	else {
+		//qDebug() << "No platform";
+	}
+	//processEdgeShapes();
+	if (0 == processEdgeShapes())
+	{
+		calculateAltitude();
+		calculateOffset();
+		calculatePlatformAngle();
+		mDataValid = true;
+	}
+	else
+	{
+		mDataValid = false;
+	}
+
+	return NULL;
 }
 
 void VisualControl::doDetection()
