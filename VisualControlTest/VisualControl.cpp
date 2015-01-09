@@ -1055,8 +1055,10 @@ iteration_return_t * VisualControl::iterate_processShapes()
 	else {
 		//qDebug() << "No platform";
 	}
+
+	iteration_return_t * pData = iterate_process_edge_shapes();
 	//processEdgeShapes();
-	if (0 == processEdgeShapes())
+	if (pData->state == Success)
 	{
 		calculateAltitude();
 		calculateOffset();
@@ -1068,7 +1070,7 @@ iteration_return_t * VisualControl::iterate_processShapes()
 		mDataValid = false;
 	}
 
-	return NULL;
+	return pData;
 }
 
 void VisualControl::doDetection()
