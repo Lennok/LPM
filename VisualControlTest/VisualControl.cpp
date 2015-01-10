@@ -455,10 +455,12 @@ void VisualControl::processShapes() {
 	else {
 		//qDebug() << "No platform";
 	}
+
+	calculateAltitude();
+
 	//processEdgeShapes();
 	if (0 == processEdgeShapes())
 	{
-		calculateAltitude();
 		calculateOffset();
 		calculatePlatformAngle();
 		mDataValid = true;
@@ -728,13 +730,25 @@ int VisualControl::processEdgeShapes()
 
 float VisualControl::calculateAltitude() {
 	if (centerShape.shapeArea > 0) {
+		double x, distance;
+		double shapeFactor;
 		double frameFactor = sqrt(frameHeight*frameWidth);
-		double shapeFactor = sqrt(centerShape.shapeArea);
-
-		double x = frameFactor / shapeFactor;
+		
+		if(platformShape.shapeArea > 0) {
+		shapeFactor = sqrt(platformShape.shapeArea);
+		x = frameFactor / shapeFactor * 4.0;
 		//double distance = 0.0064*x*x + 38.112*x + 5;
-		double distance = param1*x*x + param2*x + param3;
+		distance = param1*x*x + param2*x + param3;
 		//double distance = x;
+		}
+
+		else {
+		shapeFactor = sqrt(centerShape.shapeArea);
+		x = frameFactor / shapeFactor;
+		//double distance = 0.0064*x*x + 38.112*x + 5;
+		distance = param1*x*x + param2*x + param3;
+		//double distance = x;
+		}
 
 		stringstream dist,rel_dist;
 		dist << "Distance = " << distance;
@@ -1057,10 +1071,12 @@ iteration_return_t * VisualControl::iterate_processShapes()
 	}
 
 	iteration_return_t * pData = iterate_process_edge_shapes();
+
+	calculateAltitude();
+
 	//processEdgeShapes();
 	if (pData->state == Success)
 	{
-		calculateAltitude();
 		calculateOffset();
 		calculatePlatformAngle();
 		mDataValid = true;
