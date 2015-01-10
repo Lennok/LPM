@@ -1438,61 +1438,65 @@ namespace UAVSensorControl
 
         private void clbShowImage_ItemCheck(object sender, ItemCheckEventArgs e)
         {
-            
-                switch (e.Index)
-                {
-                    case 0:
-                        //show/ hide gray image
-                        visualControl.setShowGrayImage(e.NewValue == CheckState.Checked ? true : false);
-                        if (cbShowCompare.Checked)
-                        {
-                            visualControl2.setShowGrayImage(e.NewValue == CheckState.Checked ? true : false);
-                        }
-                        break;
-                    case 1:
-                        // show/ hide canny
-                        visualControl.setShowCannyImage(e.NewValue == CheckState.Checked ? true : false);
-                        if (cbShowCompare.Checked)
-                        {
-                            visualControl2.setShowCannyImage(e.NewValue == CheckState.Checked ? true : false);
-                        }
-                        break;
-                    case 2:
-                        //show result
-                        visualControl.setShowResultImage(e.NewValue == CheckState.Checked ? true : false);
-                        if (cbShowCompare.Checked)
-                        {
-                            visualControl2.setShowResultImage(e.NewValue == CheckState.Checked ? true : false);
-                        }
-                        break;
-                    case 3:
-                        //show settings
-                        visualControl.setShowSettings(e.NewValue == CheckState.Checked ? true : false);
-                        if (cbShowCompare.Checked)
-                        {
-                            visualControl2.setShowSettings(e.NewValue == CheckState.Checked ? true : false);
-                        }
-                        break;
-                    case 4:
-                        //show saved image
-                        visualControl.setShowImage(e.NewValue == CheckState.Checked ? true : false);
-                        if (cbShowCompare.Checked)
-                        {
-                            visualControl2.setShowImage(e.NewValue == CheckState.Checked ? true : false);
-                        }
-                        break;
-                    case 5:
-                        //show saved image
-                        visualControl.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
-                        if (cbShowCompare.Checked)
-                        {
-                            visualControl2.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
-                        }
-                        break;
-                    default:
-                        break;
-                }
+            // quick an dirty, because it was annoying as 
+            if (visualControl == null)
+            {
+                butVideoStart.PerformClick(); 
             }
+            switch (e.Index)
+            {
+                case 0:
+                    //show/ hide gray image
+                    visualControl.setShowGrayImage(e.NewValue == CheckState.Checked ? true : false);
+                    if (cbShowCompare.Checked)
+                    {
+                        visualControl2.setShowGrayImage(e.NewValue == CheckState.Checked ? true : false);
+                    }
+                    break;
+                case 1:
+                    // show/ hide canny
+                    visualControl.setShowCannyImage(e.NewValue == CheckState.Checked ? true : false);
+                    if (cbShowCompare.Checked)
+                    {
+                        visualControl2.setShowCannyImage(e.NewValue == CheckState.Checked ? true : false);
+                    }
+                    break;
+                case 2:
+                    //show result
+                    visualControl.setShowResultImage(e.NewValue == CheckState.Checked ? true : false);
+                    if (cbShowCompare.Checked)
+                    {
+                        visualControl2.setShowResultImage(e.NewValue == CheckState.Checked ? true : false);
+                    }
+                    break;
+                case 3:
+                    //show settings
+                    visualControl.setShowSettings(e.NewValue == CheckState.Checked ? true : false);
+                    if (cbShowCompare.Checked)
+                    {
+                        visualControl2.setShowSettings(e.NewValue == CheckState.Checked ? true : false);
+                    }
+                    break;
+                case 4:
+                    //show saved image
+                    visualControl.setShowImage(e.NewValue == CheckState.Checked ? true : false);
+                    if (cbShowCompare.Checked)
+                    {
+                        visualControl2.setShowImage(e.NewValue == CheckState.Checked ? true : false);
+                    }
+                    break;
+                case 5:
+                    //show saved image
+                    visualControl.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
+                    if (cbShowCompare.Checked)
+                    {
+                        visualControl2.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
 
         private void btStartOSDData_Click(object sender, EventArgs e)
         {
