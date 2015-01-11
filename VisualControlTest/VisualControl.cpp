@@ -61,6 +61,9 @@ VisualControl::VisualControl(int CameraIndex)
 	HEXAGON_CHARACTERISTIC_WINDOW = "Hexagon Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	TRIANGLE_CHARACTERISTIC_WINDOW = "Triangle Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 
+	cvNamedWindow("OutputHelper", CV_WINDOW_AUTOSIZE);
+	
+
 	capture = NULL;
 
 }
@@ -163,6 +166,9 @@ int VisualControl::setShowImage(bool show)
 			mImageFile = std::string(wideString.begin(), wideString.end());
 			cv::Mat frame = cv::imread(mImageFile);
 			cv::resize(frame,original_single_frame, cv::Size(640, 480));
+
+			frameHeight = 480;
+			frameWidth = 640;
 		}
 		else
 		{
@@ -268,7 +274,7 @@ void VisualControl::preprocessImage(Mat &frame) {
 	vector<Mat> channels_yuv;
 	src = frame.clone();
 	drawing = src.clone();
-
+	helper = drawing.clone();
 	
 
 	///convert to grayscale
@@ -464,7 +470,10 @@ void VisualControl::drawShapes() {
 	///Draw shapes
 	vector<vector<Point> > resultContours;
 
-	for (int i = 0; i<shapes.size(); ++i) {
+
+
+	for (int i = 0; i<shapes.size(); ++i) 
+	{
 		resultContours.push_back(shapes[i].shapeContour);
 
 		/// Draw contour
@@ -851,6 +860,36 @@ void VisualControl::calculatePlatformAngle() {
 	}
 }
 
+bool VisualControl::in_picture_y(float coord)
+{
+	if (coord >= frameHeight)
+	{
+		return false;
+	}
+
+	if (coord < 0.0f)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool VisualControl::in_picture_x(float coord)
+{
+	if (coord >= frameWidth)
+	{
+		return false;
+	}
+
+	if (coord < 0.0f)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 iteration_return_t * VisualControl::iterate_process_edge_shapes()
 {
 	double eucliadianDistance = 0;
@@ -885,7 +924,7 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 				triangleShape = shapes[i];
 			}
 
-			found[0] = true;
+			found[SHAPE_TRIANGLE - 1] = true;
 
 			one_shape_found = true;
 			break;
@@ -896,7 +935,7 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 				squareShape = shapes[i];
 			}
 
-			found[1] = true;
+			found[SHAPE_SQUARE - 1] = true;
 
 			one_shape_found = true;
 			break;
@@ -907,7 +946,7 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 				hexagonShape = shapes[i];
 			}
 
-			found[2] = true;
+			found[SHAPE_HEXAGON - 1] = true;
 
 			one_shape_found = true;
 			break;
@@ -925,11 +964,11 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 			if (shapes[i].shapeArea > circleShape.shapeArea && !is_inside)
 			{
 				circleShape = shapes[i];
+				found[SHAPE_CIRCLE - 1] = true;
+
+				one_shape_found = true;
 			}
 
-			found[3] = true;
-
-			one_shape_found = true;
 			break;
 		}
 	}
@@ -951,8 +990,46 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 					iteration_not_detected triangular;
 					triangular.expected_type = TypeTriangle;
 
-					retVal->nr_of_no_detections++;
-					retVal->vector_not_detected.push_back(triangular);
+
+					// ggü von Dreieck ist das Viereck
+					if (found[SHAPE_SQUARE - 1])
+					{
+						float distance_square_center_x = squareShape.shapeCenter.x - centerShape.shapeCenter.x;
+						float distance_square_center_y = squareShape.shapeCenter.y - centerShape.shapeCenter.y;
+
+						float triangle_center_x = centerShape.shapeCenter.x - distance_square_center_x;
+						float triangle_center_y = centerShape.shapeCenter.y - distance_square_center_y;
+
+
+						float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.05;
+						float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.05;
+
+						float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.05;
+						float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.05;
+
+						if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+							!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+						{
+							retVal->state = Success;
+							break;
+						}
+
+						else
+						{
+							triangular.start_x = triangle_center_region_x1;
+							triangular.start_y = triangle_center_region_y1;
+
+							triangular.end_x = triangle_center_region_x2;
+							triangular.end_y = triangle_center_region_y2;
+
+							retVal->nr_of_no_detections++;
+							retVal->vector_not_detected.push_back(triangular);
+							retVal->state = BackgroundFigureMissing;
+						}
+
+					}
+
+
 				}
 				break;
 
@@ -982,8 +1059,42 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 					iteration_not_detected circle;
 					circle.expected_type = TypeCircle;
 
-					retVal->nr_of_no_detections++;
-					retVal->vector_not_detected.push_back(circle);
+					// ggü. des Kreises liegt das Hexagon
+					if (found[SHAPE_HEXAGON - 1])
+					{
+						float distance_hexagon_center_x = hexagonShape.shapeCenter.x - centerShape.shapeCenter.x;
+						float distance_hexagon_center_y = hexagonShape.shapeCenter.y - centerShape.shapeCenter.y;
+
+						float circle_center_x = centerShape.shapeCenter.x - distance_hexagon_center_x;
+						float circle_center_y = centerShape.shapeCenter.y - distance_hexagon_center_y;
+
+
+						float circle_center_region_x1 = circle_center_x - centerShape.shapeRadius * 1.05;
+						float circle_center_region_x2 = circle_center_x + centerShape.shapeRadius * 1.05;
+
+						float circle_center_region_y1 = circle_center_y - centerShape.shapeRadius * 1.05;
+						float circle_center_region_y2 = circle_center_y + centerShape.shapeRadius * 1.05;
+
+						if (!in_picture_x(circle_center_region_x1) || !in_picture_x(circle_center_region_x2) ||
+							!in_picture_y(circle_center_region_y1) || !in_picture_y(circle_center_region_y2))
+						{
+							break;
+						}
+
+						else
+						{
+							circle.start_x = circle_center_region_x1;
+							circle.start_y = circle_center_region_y1;
+
+							circle.end_x = circle_center_region_x2;
+							circle.end_y = circle_center_region_y2;
+
+							retVal->nr_of_no_detections++;
+							retVal->vector_not_detected.push_back(circle);
+							retVal->state = BackgroundFigureMissing;
+						}
+
+					}
 				}
 				break;
 
@@ -1080,6 +1191,9 @@ void VisualControl::doDetection()
 		// know the width and height of the frame
 		frameWidth = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
 		frameHeight = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
+
+		frameHeight = 480;
+		frameWidth = 640;
 		//printf("[i] %.0f x %.0f\n", frameWidth, frameHeight);
 		//initInterface();
 	}
@@ -1109,7 +1223,20 @@ void VisualControl::doDetection()
 	showAllFigures = false;
 	preprocessImage(working_frame);
 	processContours(working_frame);
-	processShapes();
+	// processShapes();
+
+	iteration_return_t * retVal = iterate_processShapes();
+
+	for (int i = 0; i < retVal->nr_of_no_detections; i++)
+	{
+		rectangle(helper, Rect(Point(retVal->vector_not_detected[i].start_x, retVal->vector_not_detected[i].start_y), Point(retVal->vector_not_detected[i].end_x, retVal->vector_not_detected[i].end_y)), SHAPE_COLORS[0]);
+	}
+
+	/// Draw contour
+	
+
+	imshow("OutputHelper", helper);
+
 	/// Show in a window
 	if (ShowResultImage || this->mlogVideo)
 	{

@@ -49,8 +49,14 @@ typedef struct
 
 } iteration_not_detected;
 
-typedef struct
+typedef struct Iteration_Return
 {
+	Iteration_Return()
+	{
+		state = Success;
+		nr_of_no_detections = 0;
+		nr_of_wrong_detections = 0;
+	}
 	// bit encoded return state 
 	// there can be wrong detected figures and also not detected figures
 	iteration_state state;

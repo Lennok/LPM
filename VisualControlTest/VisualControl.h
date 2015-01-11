@@ -88,7 +88,7 @@ namespace VisualControlLib
 
 		/// captures frames
 		//Mat frame, gray_src, src, drawing;
-		Mat  gray_src, src, drawing, working_frame, original_single_frame;
+		Mat  gray_src, src, drawing, working_frame, original_single_frame, helper;
 
 		/// Array with figures
 		vector<Shape> shapes;
@@ -148,6 +148,10 @@ namespace VisualControlLib
 		void calculateOffset();
 		double calculateAngle(Shape &item);
 		void calculatePlatformAngle();
+
+
+		bool in_picture_x(float coord);
+		bool in_picture_y(float coord);
 
 
 	};
