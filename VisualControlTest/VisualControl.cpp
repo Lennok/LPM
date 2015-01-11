@@ -1233,19 +1233,30 @@ void VisualControl::doDetection()
 	}
 
 	/// Draw contour
-	
-
 	imshow("OutputHelper", helper);
 
-	//processShapes();
-
-	if (retVal->state == Success) { }
-	if (retVal->state == BackgroundFigureMissing) {
-		for (std::vector<iteration_not_detected>::iterator it = retVal->vector_not_detected.begin(); it != retVal->vector_not_detected.end(); it++) { 
-			//processContours(working_frame, *it);
+	if ((retVal->state & BackgroundFigureMissing) == BackgroundFigureMissing )
+	{
+		for (int i = 0; i < retVal->nr_of_no_detections; i++)
+		{
+			//processContours(realSource, retVal->vector_not_detected[i]);
 		}
+		
 	}
 
+	if ( (retVal->state & WrongFigureDetected) == WrongFigureDetected)
+	{
+		for (int i = 0; i < retVal->nr_of_wrong_detections; i++)
+		{
+			//processContours(realSource, retVal->vector_wrong_detected[i]);
+		}
+		
+	}
+
+	// Winkelschätzung mit den neuen Figuren
+	calculatePlatformAngle();
+
+	delete retVal;
 
 	/// Show in a window
 	if (ShowResultImage || this->mlogVideo)
