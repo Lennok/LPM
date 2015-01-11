@@ -1110,6 +1110,15 @@ void VisualControl::doDetection()
 	preprocessImage(working_frame);
 	processContours(working_frame);
 	processShapes();
+
+	iteration_return_t * retVal = iterate_processShapes();
+	if (retVal->state == Success) { }
+	if (retVal->state == BackgroundFigureMissing) {
+		for (std::vector<iteration_not_detected>::iterator it = retVal->vector_not_detected.begin(); it != retVal->vector_not_detected.end(); it++) { 
+			//processContours(working_frame, *it);
+		}
+	}
+
 	/// Show in a window
 	if (ShowResultImage || this->mlogVideo)
 	{
