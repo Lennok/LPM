@@ -8,7 +8,7 @@ using namespace VisualControlLib;
 /// Ranking features: Roundness, Rectangularity, Triangularity, Number of angles
 int Shape::prototypesFeatures[][4] = {
 		{ 56, 51, 85, 37 },		//Triangle
-		{ 79, 80, 75, 50 },		//Square
+		{ 79, 88, 75, 50 },		//Square
 		{ 83, 75, 69, 75 },			//Hexagon
 		{ 80, 77, 68, 100 },		//Circle
 };
@@ -85,7 +85,7 @@ void Shape::calculateFeatures(std::vector<cv::Point> &contour, std::map<std::str
 	double epsilon = 0.02*perimeter;
 	std::vector<cv::Point> approx;
 	cv::approxPolyDP(contour, approx, epsilon, true);
-
+	
 
 	double min_wtf = perimeter / 15;
 	for (int item = 0; item < approx.size(); ++item) {
@@ -106,8 +106,37 @@ void Shape::calculateFeatures(std::vector<cv::Point> &contour, std::map<std::str
 		}
 
 	}
-
-
+	if (approx.size() < 3)
+	{
+		return;
+	}
+	bool wasErased = false;
+	for (int n = 0; n < approx.size(); n++)
+	{
+		for (int j = 0; j < approx.size(); j++)
+		{
+			double dist1 = approx[n].x - approx[j].x;
+			double dist2 = approx[n].y - approx[j].y;
+			double tmpDistance =  cv::sqrt(dist1*dist1 + dist2*dist2);
+			if (tmpDistance < 5 && tmpDistance != 0)
+			{
+				approx.erase(approx.begin() + j);
+				//restart
+				n = 0;
+				j = 0;
+				wasErased = true;
+				break;
+			}
+		}
+	}
+	if (wasErased)
+	{
+		cv::convexHull(approx, approx);
+	}
+	if (approx.size() < 3)
+	{
+		return;
+	}
 	bool isClosed = cv::isContourConvex(approx);
 
 	/// Calculate basic features
@@ -154,7 +183,7 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold, bool
 	{
 		std::map<std::string, double> features;
 		calculateFeatures(contour, features);
-		if (features["area"] > 50 && features["isClosed"]&& features["eccentricity"] < 0.1)
+		if (features["area"] > 100 && features["isClosed"] && features["eccentricity"] < 0.2)
 		{
 			if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
 			{
@@ -193,7 +222,7 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 
 	/// Classify shape
 	int shapeType = SHAPE_NONE;
-	if (features["area"] > MINIMAL_AREA && features["isClosed"] == true && features["eccentricity"] < 0.2) {
+	if (features["area"] > MINIMAL_AREA && features["isClosed"] == true && features["eccentricity"] < 0.03) {
 		for (int shape_index = 0; shape_index<4; ++shape_index) {
 			for (int feature_index = 0; feature_index<4; ++feature_index) {
 				resultDistance[shape_index] += abs(featuresValues[feature_index] - (Shape::prototypesFeatures[shape_index][feature_index]/100.0));
@@ -217,7 +246,6 @@ int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 		shapeType = SHAPE_NONE;
 	}
 	return shapeType;
-	 
 }
 
 int Shape::detectCentralShape(cv::Mat &image, cv::Point2f center, double radius, int threshold)

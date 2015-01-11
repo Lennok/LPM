@@ -180,6 +180,11 @@ int VisualControl::setShowFigureCharasteristics(bool show)
 		//prototypesFeatures[4][4] -> Triangle, Square, Hexagon, Circle
 		//2nd Dimension: Roundness, Rectangularity, Triangularity, Number of angles
 
+		Shape::prototypesFeatures[0][2] = 85;
+		Shape::prototypesFeatures[1][1] = 88;
+		Shape::prototypesFeatures[3][0] = 80;
+		
+
 		cvNamedWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
 		//createTrackbar("Roundness:", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][0], 100);
 		//createTrackbar("Rectangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][1], 100);
@@ -192,21 +197,21 @@ int VisualControl::setShowFigureCharasteristics(bool show)
 		createTrackbar("Rectangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][1], 100);
 		//createTrackbar("Triangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][2], 100);
 		//createTrackbar("Number of angles", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][3], 100);
-		cvMoveWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str(), 200 , 0);
+		cvMoveWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str(), 250 , 0);
 		
 		cvNamedWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
 		/*createTrackbar("Roundness:", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][0], 100);
 		createTrackbar("Rectangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][1], 100);
 		createTrackbar("Triangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][2], 100);
 		createTrackbar("Number of angles", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][3], 100);*/
-		cvMoveWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), 400 , 0);
+		cvMoveWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), 500 , 0);
 
 		cvNamedWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
 		createTrackbar("Roundness:", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][0], 100);
 	/*	createTrackbar("Rectangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][1], 100);
 		createTrackbar("Triangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][2], 100);
 		createTrackbar("Number of angles", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][3], 100);*/
-		cvMoveWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), 600 , 0);
+		cvMoveWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), 750 , 0);
 
 	}
 	else
@@ -254,18 +259,6 @@ int VisualControl::setShowFigureCharasteristics(bool show)
 ///////////////////////////////////////////////////////////////////
 ///private functions 
 ////////////////////////////////////////////////////////////////////
-void VisualControl::Intensity(Mat inputArray, double* energy, double* entropy, double* contrast)
-{
-	//needs "opencv_legecy.lib"
-	//Direction 0°
-	//LdGray = 7
-
-	/*IplImage lagacyImage = inputArray;
-	CvGLCM* coocMatrix = cvCreateGLCM(&lagacyImage,7);
-	*energy = cvGetGLCMDescriptor(coocMatrix, 0, CV_GLCMDESC_ENERGY);
-	*entropy = cvGetGLCMDescriptor(coocMatrix, 0, CV_GLCMDESC_ENTROPY);
-	*contrast = cvGetGLCMDescriptor(coocMatrix, 0, CV_GLCMDESC_CONTRAST);*/
-}
 
 
 void VisualControl::preprocessImage(Mat &frame) {
@@ -283,25 +276,6 @@ void VisualControl::preprocessImage(Mat &frame) {
 	cvtColor(frame, yuv, CV_RGB2YUV);
 	split(hsv, channels_hsv);
 	split(yuv, channels_yuv);
-	double energy, entropy, contrast;
-	Intensity(channels_hsv[1],&energy, &entropy, &contrast);
-
-	/*if(!showSettings)
-	{
-		cv::Scalar meanS = mean(channels_hsv[1]);
-		cv::Scalar meanV, deviationV;
-		meanStdDev(channels_hsv[2], meanV, deviationV);
-		cv::Scalar meanY,deviationY;
-		meanStdDev(channels_yuv[0],meanY,deviationY);
-		
-		//no functions for entropy, energy and contrast
-		cv::Scalar entropyV = mean(channels_hsv[1]);
-		cv::Scalar entropyY = mean(channels_hsv[1]);
-		cv::Scalar energyV = mean(channels_hsv[1]);
-		cv::Scalar contrastV = mean(channels_hsv[1]);
-		cv::Scalar energyY = mean(channels_hsv[1]);
-		cv::Scalar contrastY = mean(channels_hsv[1]);
-	}*/
 	Mat temp;
 	addWeighted(channels_hsv[1], 0.5, channels_hsv[2], 0.5, 0, temp);
 	multiply(temp, channels_yuv[0], frame, 1.0 / color_coeff);
@@ -315,13 +289,7 @@ void VisualControl::preprocessImage(Mat &frame) {
 	GaussianBlur(frame, frame, Size(5, 5), 0, 0);
 	gray_src = frame.clone();
 
-	/// Detect edges using canny
-	Canny(frame, frame, thresh, thresh * 2, 3);
-
-	if (ShowCannyImage)
-	{
-		imshow(CANNY_WINDOW, frame);
-	}
+	
 }
 
 
@@ -330,27 +298,29 @@ void VisualControl::processContours(Mat &frame)
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
 	int count = 0;
+	/// Detect edges using canny
+	Canny(frame, frame, thresh, thresh * 2, 3);
+	if (ShowCannyImage)
+	{
+		imshow(CANNY_WINDOW, frame);
+	}
+	
+	//@TODO: bei Bildausschnitt -> andere Kantendetektion (zB Roberts)
 	/// Find contours	
 	findContours(frame, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	int counter = 0;
-	for (vector<vector<Point> >::iterator it = contours.begin(); it != contours.end(); ++it)
-	{
-		counter ++;
-	}
 	/// Clear the vector with forms
 	shapes.clear();
 	if (showAllFigures)
 	{
 		for (int i = 0; i< contours.size(); i++)
-		{
+		{			
 			int shapeType = SHAPE_NONE;
-			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0), showFigureCharacteristics);
+			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0), true);
 						
 			Shape temp(contours[i], shapeType);
 			std::map<std::string, double> features;
-			temp.calculateFeatures(contours[i], features);
-			if (features["isClosed"] && temp.shapeType != SHAPE_NONE)
+			if (temp.shapeType != SHAPE_NONE)
 			{
 				shapes.push_back(temp);
 				count++;
@@ -375,7 +345,7 @@ void VisualControl::processContours(Mat &frame)
 		{
 			/// Approximate contour to find border count
 			int shapeType = SHAPE_NONE;
-			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0));
+			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0), true);
 
 
 			if (shapeType != SHAPE_NONE) {
@@ -405,8 +375,6 @@ void VisualControl::processContours(Mat &frame)
 							Shape temp(contours[i], shapeType);
 							shapes.push_back(temp);
 						}
-
-				
 				}
 			}
 		}
@@ -1138,7 +1106,7 @@ void VisualControl::doDetection()
 	}
 	///time open
 	//double t = (double)getTickCount();
-	showAllFigures = true;
+	showAllFigures = false;
 	preprocessImage(working_frame);
 	processContours(working_frame);
 	processShapes();
