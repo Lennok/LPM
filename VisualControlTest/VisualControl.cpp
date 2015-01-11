@@ -729,7 +729,7 @@ int VisualControl::processEdgeShapes()
 }
 
 float VisualControl::calculateAltitude() {
-	if (centerShape.shapeArea > 0) {
+	if (centerShape.shapeArea > 0 || platformShape.shapeArea > 0) {
 		double x, distance;
 		double shapeFactor;
 		double frameFactor = sqrt(frameHeight*frameWidth);
