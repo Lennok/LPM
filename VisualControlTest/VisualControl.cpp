@@ -860,7 +860,6 @@ float VisualControl::calculateAltitude() {
 		if(platformShape.shapeArea > 0) {
 		shapeFactor = sqrt(platformShape.shapeArea);
 		x = frameFactor / shapeFactor * 4.0;
-		//x = frameFactor / shapeFactor * 4.6188; //evtl. cameraspec. params anpassen, abhängig von GoPro Höhenschätzung
 		//double distance = 0.0064*x*x + 38.112*x + 5;
 		distance = param1*x*x + param2*x + param3;
 		//double distance = x;
@@ -868,8 +867,7 @@ float VisualControl::calculateAltitude() {
 
 		else {
 		shapeFactor = sqrt(centerShape.shapeArea);
-		x = frameFactor / shapeFactor; 
-		//x = frameFactor / shapeFactor * 1.1547; //evlt. cameraspec. params anpassen, abhängig von GoPro Höhenschätzung
+		x = frameFactor / shapeFactor;
 		//double distance = 0.0064*x*x + 38.112*x + 5;
 		distance = param1*x*x + param2*x + param3;
 		//double distance = x;
@@ -2066,8 +2064,6 @@ void VisualControl::doDetection()
 		}
 		
 	}
-
-	// @TODO: add new Shapes to: eg. triangleShape for calculatePlatformAngle
 
 	// Winkelschätzung mit den neuen Figuren
 	calculatePlatformAngle();
