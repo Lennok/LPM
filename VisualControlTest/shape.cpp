@@ -82,43 +82,73 @@ void Shape::calculateFeaturesForCropedFrame(std::vector<cv::Point> &contour, std
 	/// Approximate contour
 	double perimeter = arcLength(contour, true);
 	double epsilon = 0.02*perimeter;
-	std::vector<cv::Point> approx;
+	std::vector<cv::Point> approx, approx1;
+	
 	cv::approxPolyDP(contour, approx, epsilon, true);
-
-	//new optimation
-	if (approx.size() < 3)
+	cv::approxPolyDP(contour, approx1, epsilon, true);
+	bool isClosed = cv::isContourConvex(approx);
+	if (isClosed == false)
 	{
-		return;
-	}
-	bool wasErased = false;
-	for (int n = 0; n < approx.size(); n++)
-	{
-		for (int j = 0; j < approx.size(); j++)
+		//new optimation
+		if (approx.size() < 3)
 		{
-			double dist1 = approx[n].x - approx[j].x;
-			double dist2 = approx[n].y - approx[j].y;
-			double tmpDistance =  cv::sqrt(dist1*dist1 + dist2*dist2);
-			if (tmpDistance < 3 && tmpDistance != 0)
+			return;
+		}
+		bool wasErased = false;
+	
+		for (int n = 0; n < approx.size(); n++)
+		{
+			for (int j = 0; j < approx.size(); j++)
 			{
-				approx.erase(approx.begin() + j);
-				//restart
-				n = 0;
-				j = 0;
-				wasErased = true;
+				double dist1 = approx[n].x - approx[j].x;
+				double dist2 = approx[n].y - approx[j].y;
+				double tmpDistance =  cv::sqrt(dist1*dist1 + dist2*dist2);
+				if (tmpDistance < 5 && tmpDistance != 0)
+				{
+					approx.erase(approx.begin() + j);
+					//restart
+					n = 0;
+					j = 0;
+					wasErased = true;
+					break;
+				}
+			}
+		}
+		bool noHitMiddlePoint = false;
+
+		for (int i = 0; i < approx.size(); i++)
+		{
+			//calc middelpoint between 
+			cv::Point midPoint;
+			if (i + 1 == approx.size())
+			{
+				midPoint.x = (approx[i].x + approx[0].x) /2;
+				midPoint.y = (approx[i].y + approx[0].y) /2;
+			}
+			else
+			{
+				midPoint.x = (approx[i].x + approx[i+1].x) /2;
+				midPoint.y = (approx[i].y + approx[i+1].y) /2;
+			}
+			
+			//calc distance from contour to midpoint
+			double distance = cv::pointPolygonTest(approx1, midPoint, true);
+			if (abs(distance) > 5)
+			{
+				noHitMiddlePoint = true;
 				break;
 			}
 		}
+		if (wasErased && !noHitMiddlePoint)
+		{
+			cv::convexHull(approx, approx);
+		}
+		if (approx.size() < 3)
+		{
+			return;
+		}
 	}
-	if (wasErased)
-	{
-		cv::convexHull(approx, approx);
-	}
-	if (approx.size() < 3)
-	{
-		return;
-	}
-
-	bool isClosed = cv::isContourConvex(approx);
+	isClosed = cv::isContourConvex(approx);
 
 	/// Calculate basic features
 	double area = cv::contourArea(approx);
