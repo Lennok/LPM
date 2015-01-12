@@ -1487,10 +1487,10 @@ namespace UAVSensorControl
                     break;
                 case 5:
                     //show saved image
-                    visualControl.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
+                    visualControl.setShowAllShapes(e.NewValue == CheckState.Checked ? true : false);
                     if (cbShowCompare.Checked)
                     {
-                        visualControl2.setShowFigureCharasteristics(e.NewValue == CheckState.Checked ? true : false);
+                        visualControl2.setShowAllShapes(e.NewValue == CheckState.Checked ? true : false);
                     }
                     break;
                 default:

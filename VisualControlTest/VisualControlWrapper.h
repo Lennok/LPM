@@ -52,7 +52,8 @@ namespace VisualControlLib
 		int setShowResultImage(bool show);
 		int setShowSettings(bool show);
 		int setShowImage(bool show);
-		int setShowFigureCharasteristics(bool show);
+		int setShowAllShapes(bool show);
+		
 		str_VisualData doDetection();
 		void setCalculationParams(str_CalibrationData calibrationData);
 		void setVideoLogging(bool log, System::String^ logDirectory);

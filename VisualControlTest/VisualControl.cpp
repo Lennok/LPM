@@ -25,7 +25,6 @@ VisualControl::VisualControl(int CameraIndex)
 	ShowGrayImage = false;
 	ShowResultImage = false;
 	showSettings = false;
-	showFigureCharacteristics = false;
 	showSingleImage = false;
 	mPlaformAngle = 0;
 	mPlatformAltitude = 0;
@@ -56,15 +55,9 @@ VisualControl::VisualControl(int CameraIndex)
 	RESULT_WINDOW = "Result" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	GRAY_WINDOW = "Gray" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	SETTINGS_WINDOW = "Settings" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
-	CIRCLE_CHARACTERISTIC_WINDOW = "Circle Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
-	SQUARE_CHARACTERISTIC_WINDOW = "Square Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
-	HEXAGON_CHARACTERISTIC_WINDOW = "Hexagon Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
-	TRIANGLE_CHARACTERISTIC_WINDOW = "Triangle Characteristics" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
-
 	cvNamedWindow("OutputHelper", CV_WINDOW_AUTOSIZE);
-	
-
 	capture = NULL;
+	showAllFigures = false;
 
 }
 
@@ -166,9 +159,13 @@ int VisualControl::setShowImage(bool show)
 			mImageFile = std::string(wideString.begin(), wideString.end());
 			cv::Mat frame = cv::imread(mImageFile);
 			cv::resize(frame,original_single_frame, cv::Size(640, 480));
+			//cv::resize(frame,original_single_frame, cv::Size(1280, 720));
 
 			frameHeight = 480;
 			frameWidth = 640;
+			//GoPro
+			/*	frameHeight = 720;
+			frameWidth = 1280;*/
 		}
 		else
 		{
@@ -178,58 +175,21 @@ int VisualControl::setShowImage(bool show)
 	}
 	return 0;
 }
-int VisualControl::setShowFigureCharasteristics(bool show)
+
+
+int VisualControl::setShowAllShapes(bool show)
 {
-	showFigureCharacteristics = show;
+	showAllFigures = show;
 	if (show)
 	{
-		//prototypesFeatures[4][4] -> Triangle, Square, Hexagon, Circle
-		//2nd Dimension: Roundness, Rectangularity, Triangularity, Number of angles
-
-		Shape::prototypesFeatures[0][2] = 85;
-		Shape::prototypesFeatures[1][1] = 88;
-		Shape::prototypesFeatures[3][0] = 80;
-		
-
-		cvNamedWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
-		//createTrackbar("Roundness:", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][0], 100);
-		//createTrackbar("Rectangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][1], 100);
-		createTrackbar("Triangularity", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][2], 100);
-		//createTrackbar("Number of angles", TRIANGLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[0][3], 100);
-		cvMoveWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str(), 0 , 0);
-
-		cvNamedWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
-		//createTrackbar("Roundness:", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][0], 100);
-		createTrackbar("Rectangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][1], 100);
-		//createTrackbar("Triangularity", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][2], 100);
-		//createTrackbar("Number of angles", SQUARE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[1][3], 100);
-		cvMoveWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str(), 250 , 0);
-		
-		cvNamedWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
-		/*createTrackbar("Roundness:", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][0], 100);
-		createTrackbar("Rectangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][1], 100);
-		createTrackbar("Triangularity", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][2], 100);
-		createTrackbar("Number of angles", HEXAGON_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[2][3], 100);*/
-		cvMoveWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str(), 500 , 0);
-
-		cvNamedWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), CV_WINDOW_NORMAL);
-		createTrackbar("Roundness:", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][0], 100);
-	/*	createTrackbar("Rectangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][1], 100);
-		createTrackbar("Triangularity", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][2], 100);
-		createTrackbar("Number of angles", CIRCLE_CHARACTERISTIC_WINDOW, &Shape::prototypesFeatures[3][3], 100);*/
-		cvMoveWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str(), 750 , 0);
-
+		cvNamedWindow("All Shapes", CV_WINDOW_AUTOSIZE);
 	}
 	else
 	{
-		cvDestroyWindow(CIRCLE_CHARACTERISTIC_WINDOW.c_str());
-		cvDestroyWindow(HEXAGON_CHARACTERISTIC_WINDOW.c_str());
-		cvDestroyWindow(SQUARE_CHARACTERISTIC_WINDOW.c_str());
-		cvDestroyWindow(TRIANGLE_CHARACTERISTIC_WINDOW.c_str());
+		cvDestroyWindow("All Shapes");
 	}	
 	return 0;
 }
-
 //int VisualControl::startPlatformDetection()
 //{
 //	if (!(mainLoopRunning==1))
@@ -303,7 +263,6 @@ void VisualControl::processContours(Mat &frame)
 {
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
-	int count = 0;
 	/// Detect edges using canny
 	Canny(frame, frame, thresh, thresh * 2, 3);
 	if (ShowCannyImage)
@@ -311,82 +270,194 @@ void VisualControl::processContours(Mat &frame)
 		imshow(CANNY_WINDOW, frame);
 	}
 	
-	//@TODO: bei Bildausschnitt -> andere Kantendetektion (zB Roberts)
 	/// Find contours	
 	findContours(frame, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
 	/// Clear the vector with forms
 	shapes.clear();
+	
+	allFiguresFrame = src.clone();
+	for (int i = 0; i< contours.size(); i++)
+	{			
+		int shapeType = SHAPE_NONE;
+		shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0));
+						
+		Shape temp(contours[i], shapeType);
+		if (temp.shapeType != SHAPE_NONE)
+		{
+			shapes.push_back(temp);
+		}			
+	}
 	if (showAllFigures)
 	{
-		for (int i = 0; i< contours.size(); i++)
-		{			
-			int shapeType = SHAPE_NONE;
-			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0), true);
-						
-			Shape temp(contours[i], shapeType);
-			std::map<std::string, double> features;
-			if (temp.shapeType != SHAPE_NONE)
-			{
-				shapes.push_back(temp);
-				count++;
-			}			
-		}
 		///Draw shapes
 		vector<vector<Point> > resultContours;
 
 		for (int i = 0; i<shapes.size(); ++i) {
 			resultContours.push_back(shapes[i].shapeContour);	
-			drawContours(drawing, resultContours, i,  SHAPE_COLORS[shapes[i].shapeType], 1, 8, hierarchy, 0, Point());
+			drawContours(allFiguresFrame, resultContours, i,  SHAPE_COLORS[shapes[i].shapeType], 1, 8, hierarchy, 0, Point());
 		}
-		if (ShowResultImage)
-		{
-			imshow(RESULT_WINDOW, drawing);
-		}
-	}
-	else
+		putText(allFiguresFrame, "Gelb -> Quadrat", Point(1, 25), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
+		putText(allFiguresFrame, "Rot -> Kreis", Point(1, 40), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
+		putText(allFiguresFrame, "Gruen -> Dreieck", Point(1, 55), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
+		putText(allFiguresFrame, "Blau -> Hexagon", Point(1, 70), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
+		putText(allFiguresFrame, "Lila -> nach Iteration gefunden", Point(1, 85), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
+		imshow("All Shapes", allFiguresFrame);
+	}	
+}
+
+
+void VisualControl::processContours(Mat frame, iteration_not_detected newPictureFrame)
+{
+	//Crop Pic
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	vector<Shape> cropShapes;
+
+	int width = abs(newPictureFrame.end_x-newPictureFrame.start_x);
+	int height = abs(newPictureFrame.end_y - newPictureFrame.start_y);
+	cv::Rect* rectangle = new Rect(newPictureFrame.start_x, newPictureFrame.start_y,width , height);
+	Mat* imgCrop = new Mat(frame, *rectangle);
+
+	vector<vector<Point> > resultContours;
+	Canny(*imgCrop, *imgCrop, thresh, thresh * 2, 3);
+	findContours(*imgCrop, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	//cleanup
+	delete rectangle;
+	delete imgCrop;
+
+	for (int i = 0; i < contours.size(); i++)
 	{
-		/// Fill shapes vector
-		for (int i = 0; i< contours.size(); i++)
+		int shapeType = SHAPE_NONE;
+		std::map<std::string, double> features;
+		//new Function
+		Shape::calculateFeaturesForCropedFrame(contours[i], features);
+		if (features["area"] > 100 && features["isClosed"] && features["eccentricity"] < 0.2)
 		{
-			/// Approximate contour to find border count
-			int shapeType = SHAPE_NONE;
-			shapeType = Shape::classifyShape(contours[i], (double)(class_threshold / 100.0), true);
-
-
-			if (shapeType != SHAPE_NONE) {
-
-				if (shapes.size() == 0) {
-					Shape temp(contours[i], shapeType);
-					shapes.push_back(temp);
-				}
-				else 
-				{
-					bool isAdded = false;
-				
-				
-						///check whether the circuit to any figure, if so, to absorb less a figure greater
-						for (int j = 0; j<shapes.size(); ++j) {
-							double eucliadianDistance = 0;
-							bool isInside = shapes[j].centerIsInside(contours[i], eucliadianDistance);
-
-							if (shapes[j].shapeType == shapeType && isInside && eucliadianDistance < min_eucl_dist) {
-								shapes[j].mergeContours(contours[i]);
-								isAdded = true;
-								break;
-							}
-						}
-
-						if (!isAdded) {
-							Shape temp(contours[i], shapeType);
-							shapes.push_back(temp);
-						}
-				}
+			if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
+			{
+				shapeType = SHAPE_TRIANGLE;
+			}
+			else if (features["rectangularity"] > Shape::prototypesFeatures[1][1]/100.0 && (features["sides"] == 4 || features["sides"] == 5))
+			{
+				shapeType = SHAPE_SQUARE;
+			}
+			else if (features["roundness"] > Shape::prototypesFeatures[3][0]/100.0 && features["sides"] == 8)
+			{
+				shapeType = SHAPE_CIRCLE;
+			}
+			else if (features["sides"] == 6 || features["sides"] == 7)
+			{
+				shapeType = SHAPE_HEXAGON;
 			}
 		}
+		
+		if (shapeType == newPictureFrame.expected_type)
+		{
+			//fix Coordiantes to original image
+			for (int j = 0; j < contours[i].size(); j++)
+			{
+				contours[i][j].x += newPictureFrame.start_x;
+				contours[i][j].y += newPictureFrame.start_y;
+			}
+
+			Shape temp(contours[i], shapeType);
+			shapes.push_back(temp);
+			cropShapes.push_back(temp);
+		}			
 	}
+
+	if (showAllFigures)
+	{
+		///Draw shapes
+		vector<vector<Point> > resultContours;
+
+		for (int i = 0; i<cropShapes.size(); ++i) {
+			resultContours.push_back(cropShapes[i].shapeContour);	
+			drawContours(allFiguresFrame, resultContours, i,  Scalar(255,0,200), 1, 8, hierarchy, 0, Point());
+		}
+
+		imshow("All Shapes", allFiguresFrame);
+	}	
 	
+
 }
+void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPictureFrame)
+{
+	//Crop Pic
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	vector<Shape> cropShapes;
+
+	int width = abs(newPictureFrame.end_x-newPictureFrame.start_x);
+	int height = abs(newPictureFrame.end_y - newPictureFrame.start_y);
+	cv::Rect* rectangle = new Rect(newPictureFrame.start_x, newPictureFrame.start_y,width , height);
+	Mat* imgCrop = new Mat(frame, *rectangle);
+
+	vector<vector<Point> > resultContours;
+	Canny(*imgCrop, *imgCrop, thresh, thresh * 2, 3);
+	findContours(*imgCrop, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	//cleanup
+	delete rectangle;
+	delete imgCrop;
+
+	for (int i = 0; i < contours.size(); i++)
+	{
+		int shapeType = SHAPE_NONE;
+		std::map<std::string, double> features;
+		//new Function
+		Shape::calculateFeaturesForCropedFrame(contours[i], features);
+		if (features["area"] > 100 && features["isClosed"] && features["eccentricity"] < 0.2)
+		{
+			if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
+			{
+				shapeType = SHAPE_TRIANGLE;
+			}
+			else if (features["rectangularity"] > Shape::prototypesFeatures[1][1]/100.0 && (features["sides"] == 4 || features["sides"] == 5))
+			{
+				shapeType = SHAPE_SQUARE;
+			}
+			else if (features["roundness"] > Shape::prototypesFeatures[3][0]/100.0 && features["sides"] == 8)
+			{
+				shapeType = SHAPE_CIRCLE;
+			}
+			else if (features["sides"] == 6 || features["sides"] == 7)
+			{
+				shapeType = SHAPE_HEXAGON;
+			}
+		}
+		
+		if (shapeType == newPictureFrame.expected_type)
+		{
+			//fix Coordiantes to original image
+			for (int j = 0; j < contours[i].size(); j++)
+			{
+				contours[i][j].x += newPictureFrame.start_x;
+				contours[i][j].y += newPictureFrame.start_y;
+			}
+
+			Shape temp(contours[i], shapeType);
+			shapes.push_back(temp);
+			cropShapes.push_back(temp);
+		}			
+	}
+
+	if (showAllFigures)
+	{
+		///Draw shapes
+		vector<vector<Point> > resultContours;
+
+		for (int i = 0; i<cropShapes.size(); ++i) {
+			resultContours.push_back(cropShapes[i].shapeContour);	
+			drawContours(allFiguresFrame, resultContours, i,  Scalar(255,0,200), 1, 8, hierarchy, 0, Point());
+		}
+
+		imshow("All Shapes", allFiguresFrame);
+	}	
+}
+
 
 void VisualControl::processShapes() {
 	/// Clear formes arraysS
@@ -1170,8 +1241,6 @@ iteration_return_t * VisualControl::iterate_processShapes()
 
 void VisualControl::doDetection()
 {
-
-
 	if (capture == NULL)
 	{
 
@@ -1192,6 +1261,9 @@ void VisualControl::doDetection()
 		frameWidth = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
 		frameHeight = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
 
+		//GoPro
+		/*	frameHeight = 720;
+			frameWidth = 1280;*/
 		frameHeight = 480;
 		frameWidth = 640;
 		//printf("[i] %.0f x %.0f\n", frameWidth, frameHeight);
@@ -1220,7 +1292,6 @@ void VisualControl::doDetection()
 	}
 	///time open
 	//double t = (double)getTickCount();
-	showAllFigures = false;
 	preprocessImage(working_frame);
 	processContours(working_frame);
 	// processShapes();
@@ -1234,12 +1305,12 @@ void VisualControl::doDetection()
 
 	/// Draw contour
 	imshow("OutputHelper", helper);
-
+	Mat original = src.clone();
 	if ((retVal->state & BackgroundFigureMissing) == BackgroundFigureMissing )
 	{
 		for (int i = 0; i < retVal->nr_of_no_detections; i++)
 		{
-			//processContours(realSource, retVal->vector_not_detected[i]);
+			processContours(original, retVal->vector_not_detected[i]);
 		}
 		
 	}
@@ -1248,10 +1319,12 @@ void VisualControl::doDetection()
 	{
 		for (int i = 0; i < retVal->nr_of_wrong_detections; i++)
 		{
-			//processContours(realSource, retVal->vector_wrong_detected[i]);
+			processContours(original, retVal->vector_wrong_detected[i]);
 		}
 		
 	}
+
+	// @TODO: add new Shapes to: eg. triangleShape for calculatePlatformAngle
 
 	// Winkelschätzung mit den neuen Figuren
 	calculatePlatformAngle();
@@ -1261,10 +1334,9 @@ void VisualControl::doDetection()
 	/// Show in a window
 	if (ShowResultImage || this->mlogVideo)
 	{
-		if (!showAllFigures)
-		{
-			drawShapes();
-		}
+		
+		drawShapes();
+		
 		if (outputVideo != NULL && outputVideo->isOpened())
 		{
 			this->outputVideo->write( drawing);

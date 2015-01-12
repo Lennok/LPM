@@ -39,7 +39,8 @@ namespace VisualControlLib
 		int setShowResultImage(bool show);
 		int setShowSettings(bool show);
 		int setShowImage(bool show);
-		int setShowFigureCharasteristics(bool show);
+		int setShowAllShapes(bool show);
+		
 
 
 		//main loop
@@ -62,7 +63,6 @@ namespace VisualControlLib
 		bool ShowResultImage;
 		bool showSettings;
 		bool showSingleImage;
-		bool showFigureCharacteristics;
 		bool showAllFigures;
 
 		//calculation parameter
@@ -78,17 +78,13 @@ namespace VisualControlLib
 		string VisualControl::RESULT_WINDOW;
 		string VisualControl::GRAY_WINDOW;
 		string VisualControl::SETTINGS_WINDOW;
-		string VisualControl::CIRCLE_CHARACTERISTIC_WINDOW;
-		string VisualControl::SQUARE_CHARACTERISTIC_WINDOW;
-		string VisualControl::HEXAGON_CHARACTERISTIC_WINDOW;
-		string VisualControl::TRIANGLE_CHARACTERISTIC_WINDOW;
 
 
 		CvCapture* capture;
 
 		/// captures frames
 		//Mat frame, gray_src, src, drawing;
-		Mat  gray_src, src, drawing, working_frame, original_single_frame, helper;
+		Mat  gray_src, src, drawing, working_frame, original_single_frame, helper, allFiguresFrame;
 
 		/// Array with figures
 		vector<Shape> shapes;
@@ -128,6 +124,8 @@ namespace VisualControlLib
 		//methods
 		void preprocessImage(Mat &frame);
 		void processContours(Mat &frame);
+		void processContours(Mat frame, iteration_not_detected newPictureFrame);
+		void processContours(Mat frame, iteration_wrong_detected newPictureFrame);
 		int processEdgeShapes();
 
 		void processShapes();

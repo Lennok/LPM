@@ -3,6 +3,7 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include "iteration_return.h"
 
 namespace VisualControlLib
 {
@@ -59,10 +60,9 @@ namespace VisualControlLib
 	public:
 		static int prototypesFeatures[4][4];
 		static void calculateFeatures(std::vector<cv::Point> &contour, std::map<std::string, double> &features);
+		static void calculateFeaturesForCropedFrame(std::vector<cv::Point> &contour, std::map<std::string, double> &features);
 		static int classifyShape(std::vector<cv::Point> &contour, double threshold);
-		static int classifyShape(std::vector<cv::Point> &contour, double threshold, bool method);
 		static int detectCentralShape(cv::Mat &image, cv::Point2f center, double radius, int threshold);
-
 	};
 
 	

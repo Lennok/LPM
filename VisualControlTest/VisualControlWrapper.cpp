@@ -92,9 +92,9 @@ int VisualControlWrapper::setShowImage(bool show)
 	return this->visContrHandle->setShowImage(show);
 }
 
-int VisualControlWrapper::setShowFigureCharasteristics(bool show)
+int VisualControlWrapper::setShowAllShapes(bool show)
 {
-	return this->visContrHandle->setShowFigureCharasteristics(show);
+	return this->visContrHandle->setShowAllShapes(show);
 }
 
 str_VisualData VisualControlWrapper::doDetection()
