@@ -328,16 +328,14 @@ void VisualControl::processContours(Mat frame, iteration_not_detected newPicture
 	Canny(*imgCrop, *imgCrop, thresh, thresh * 2, 3);
 	findContours(*imgCrop, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	//cleanup
-	delete rectangle;
-	delete imgCrop;
-
+	
 	for (int i = 0; i < contours.size(); i++)
 	{
 		int shapeType = SHAPE_NONE;
 		std::map<std::string, double> features;
 		//new Function
 		Shape::calculateFeaturesForCropedFrame(contours[i], features);
+
 		if (features["area"] > 100 && features["isClosed"] && features["eccentricity"] < 0.2)
 		{
 			if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
@@ -371,6 +369,36 @@ void VisualControl::processContours(Mat frame, iteration_not_detected newPicture
 			shapes.push_back(temp);
 			cropShapes.push_back(temp);
 		}			
+	}
+
+	Shape temp;
+	temp.shapeArea = 0;
+	for (int i = 0; i < cropShapes.size(); i++)
+	{
+		if (cropShapes[i].shapeArea > temp.shapeArea)
+		{
+			temp = cropShapes[i];
+		}
+	}
+	if (cropShapes.size() > 0)
+	{
+		switch (newPictureFrame.expected_type)	
+			{
+				case TypeRectangle:
+					squareShape =  temp;
+					break;
+				case TypeTriangle:
+					triangleShape = temp;
+					break;
+				case TypeCircle:
+					circleShape = temp;
+					break;
+				case TypeHexagon:
+					hexagonShape = temp;
+					break;
+				default:
+					break;
+			}
 	}
 
 	if (showAllFigures)

@@ -37,8 +37,13 @@ typedef struct
 
 } iteration_wrong_detected;
 
-typedef struct
+typedef struct iteration_not
 {
+	iteration_not ()
+	{
+		start_x = start_y = end_x = end_y = 0;
+	}
+	
 	int start_x;
 	int start_y;
 
