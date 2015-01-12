@@ -321,6 +321,11 @@ void VisualControl::processContours(Mat frame, iteration_not_detected newPicture
 
 	int width = abs(newPictureFrame.end_x-newPictureFrame.start_x);
 	int height = abs(newPictureFrame.end_y - newPictureFrame.start_y);
+
+	if (width == 0 || height == 0)
+	{
+		return;
+	}
 	cv::Rect* rectangle = new Rect(newPictureFrame.start_x, newPictureFrame.start_y,width , height);
 	Mat* imgCrop = new Mat(frame, *rectangle);
 
@@ -328,7 +333,9 @@ void VisualControl::processContours(Mat frame, iteration_not_detected newPicture
 	Canny(*imgCrop, *imgCrop, thresh, thresh * 2, 3);
 	findContours(*imgCrop, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	
+	delete rectangle;
+	delete imgCrop;
+
 	for (int i = 0; i < contours.size(); i++)
 	{
 		int shapeType = SHAPE_NONE;
@@ -425,6 +432,11 @@ void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPict
 
 	int width = abs(newPictureFrame.end_x-newPictureFrame.start_x);
 	int height = abs(newPictureFrame.end_y - newPictureFrame.start_y);
+
+	if (width == 0 || height == 0)
+	{
+		return;
+	}
 	cv::Rect* rectangle = new Rect(newPictureFrame.start_x, newPictureFrame.start_y,width , height);
 	Mat* imgCrop = new Mat(frame, *rectangle);
 
@@ -432,7 +444,6 @@ void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPict
 	Canny(*imgCrop, *imgCrop, thresh, thresh * 2, 3);
 	findContours(*imgCrop, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-	//cleanup
 	delete rectangle;
 	delete imgCrop;
 
@@ -442,6 +453,7 @@ void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPict
 		std::map<std::string, double> features;
 		//new Function
 		Shape::calculateFeaturesForCropedFrame(contours[i], features);
+
 		if (features["area"] > 100 && features["isClosed"] && features["eccentricity"] < 0.2)
 		{
 			if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
@@ -475,6 +487,36 @@ void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPict
 			shapes.push_back(temp);
 			cropShapes.push_back(temp);
 		}			
+	}
+
+	Shape temp;
+	temp.shapeArea = 0;
+	for (int i = 0; i < cropShapes.size(); i++)
+	{
+		if (cropShapes[i].shapeArea > temp.shapeArea)
+		{
+			temp = cropShapes[i];
+		}
+	}
+	if (cropShapes.size() > 0)
+	{
+		switch (newPictureFrame.expected_type)	
+			{
+				case TypeRectangle:
+					squareShape =  temp;
+					break;
+				case TypeTriangle:
+					triangleShape = temp;
+					break;
+				case TypeCircle:
+					circleShape = temp;
+					break;
+				case TypeHexagon:
+					hexagonShape = temp;
+					break;
+				default:
+					break;
+			}
 	}
 
 	if (showAllFigures)
@@ -817,8 +859,8 @@ float VisualControl::calculateAltitude() {
 		
 		if(platformShape.shapeArea > 0) {
 		shapeFactor = sqrt(platformShape.shapeArea);
-		//x = frameFactor / shapeFactor * 4.0;
-		x = frameFactor / shapeFactor * 4.6188; //evtl. cameraspec. params anpassen, abhängig von GoPro Höhenschätzung
+		x = frameFactor / shapeFactor * 4.0;
+		//x = frameFactor / shapeFactor * 4.6188; //evtl. cameraspec. params anpassen, abhängig von GoPro Höhenschätzung
 		//double distance = 0.0064*x*x + 38.112*x + 5;
 		distance = param1*x*x + param2*x + param3;
 		//double distance = x;
@@ -826,8 +868,8 @@ float VisualControl::calculateAltitude() {
 
 		else {
 		shapeFactor = sqrt(centerShape.shapeArea);
-		//x = frameFactor / shapeFactor; 
-		x = frameFactor / shapeFactor * 1.1547; //evlt. cameraspec. params anpassen, abhängig von GoPro Höhenschätzung
+		x = frameFactor / shapeFactor; 
+		//x = frameFactor / shapeFactor * 1.1547; //evlt. cameraspec. params anpassen, abhängig von GoPro Höhenschätzung
 		//double distance = 0.0064*x*x + 38.112*x + 5;
 		distance = param1*x*x + param2*x + param3;
 		//double distance = x;
@@ -1003,9 +1045,10 @@ vector<Point> VisualControl::generate_line(float radangle, Point start)
 	float xKoord = (float)start.x;
 	float yKoord = (float)start.y;
 
-	while (in_picture_x(xKoord), in_picture_y(yKoord))
+	while (in_picture_x(xKoord) && in_picture_y(yKoord))
 	{
-		_line.push_back(Point(xKoord, yKoord));
+		Point p = Point(xKoord, yKoord);
+		_line.push_back(p);
 
 		xKoord += 1.0f;
 		yKoord += radangle;
@@ -1017,9 +1060,10 @@ vector<Point> VisualControl::generate_line(float radangle, Point start)
 	xKoord = start.x;
 	yKoord = start.y;
 
-	while (in_picture_x(xKoord), in_picture_y(yKoord))
+	while (in_picture_x(xKoord) && in_picture_y(yKoord))
 	{
-		_line.push_back(Point(xKoord, yKoord));
+		Point p = Point(xKoord, yKoord);
+		_line.push_back(p);
 
 		xKoord -= 1.0f;
 		yKoord -= radangle;
@@ -1060,6 +1104,11 @@ Point  VisualControl::find_intersection_point(vector<Point> line1, vector<Point>
 
 bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool anticlockwise, int& x1, int& y1, int& x2, int& y2)
 {
+	if (!cross && !clockwise && !anticlockwise)
+	{
+		return false;
+	}
+
 	switch (shape)
 	{
 		case SHAPE_TRIANGLE:
@@ -1181,7 +1230,6 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 
 				y1 = hexagon_center_region_y1;
 				y2 = hexagon_center_region_y2;
-				break;
 			}
 
 			break;
@@ -1213,7 +1261,6 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 
 				y1 = hexagon_center_region_y1;
 				y2 = hexagon_center_region_y2;
-				break;
 			}
 
 			break;
@@ -1245,7 +1292,6 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 
 				y1 = circle_center_region_y1;
 				y2 = circle_center_region_y2;
-				break;
 			}
 
 			break;
@@ -1356,6 +1402,10 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 
 	for (int i = 1; i < 5; i++)
 	{
+		x1 = 0; 
+		x2 = 0;
+		y1 = 0; 
+		y2 = 0;
 		if (!found[i - 1])
 		{
 			switch (i)
@@ -1381,44 +1431,6 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 						retVal->vector_not_detected.push_back(triangular);
 						retVal->state = (iteration_state)(retVal->state | BackgroundFigureMissing);
 					}
-
-					// ggü von Dreieck ist das Viereck
-					/*if (found[SHAPE_SQUARE - 1])
-					{
-						float distance_square_center_x = squareShape.shapeCenter.x - centerShape.shapeCenter.x;
-						float distance_square_center_y = squareShape.shapeCenter.y - centerShape.shapeCenter.y;
-
-						float triangle_center_x = centerShape.shapeCenter.x - distance_square_center_x;
-						float triangle_center_y = centerShape.shapeCenter.y - distance_square_center_y;
-
-
-						float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.35f;
-						float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.35f;
-
-						float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.35f;
-						float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.35f;
-
-						if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
-							!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
-						{
-							retVal->state = Success;
-							break;
-						}
-
-						else
-						{
-							triangular.start_x = triangle_center_region_x1;
-							triangular.start_y = triangle_center_region_y1;
-
-							triangular.end_x = triangle_center_region_x2;
-							triangular.end_y = triangle_center_region_y2;
-
-							retVal->nr_of_no_detections++;
-							retVal->vector_not_detected.push_back(triangular);
-							retVal->state = BackgroundFigureMissing;
-						}
-
-					}*/
 
 
 				}
@@ -1494,43 +1506,6 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 						retVal->vector_not_detected.push_back(circle);
 						retVal->state = (iteration_state)(retVal->state | BackgroundFigureMissing);
 					}
-
-					// ggü. des Kreises liegt das Hexagon
-					/*if (found[SHAPE_HEXAGON - 1])
-					{
-						float distance_hexagon_center_x = hexagonShape.shapeCenter.x - centerShape.shapeCenter.x;
-						float distance_hexagon_center_y = hexagonShape.shapeCenter.y - centerShape.shapeCenter.y;
-
-						float circle_center_x = centerShape.shapeCenter.x - distance_hexagon_center_x;
-						float circle_center_y = centerShape.shapeCenter.y - distance_hexagon_center_y;
-
-
-						float circle_center_region_x1 = circle_center_x - centerShape.shapeRadius * 1.35f;
-						float circle_center_region_x2 = circle_center_x + centerShape.shapeRadius * 1.35f;
-
-						float circle_center_region_y1 = circle_center_y - centerShape.shapeRadius * 1.35f;
-						float circle_center_region_y2 = circle_center_y + centerShape.shapeRadius * 1.35f;
-
-						if (!in_picture_x(circle_center_region_x1) || !in_picture_x(circle_center_region_x2) ||
-							!in_picture_y(circle_center_region_y1) || !in_picture_y(circle_center_region_y2))
-						{
-							break;
-						}
-
-						else
-						{
-							circle.start_x = circle_center_region_x1;
-							circle.start_y = circle_center_region_y1;
-
-							circle.end_x = circle_center_region_x2;
-							circle.end_y = circle_center_region_y2;
-
-							retVal->nr_of_no_detections++;
-							retVal->vector_not_detected.push_back(circle);
-							retVal->state = BackgroundFigureMissing;
-						}
-
-					}*/
 				}
 				break;
 
