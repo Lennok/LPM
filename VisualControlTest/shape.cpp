@@ -77,9 +77,83 @@ void Shape::mergeContours(std::vector<cv::Point> &contour)
 	shapeChildrenCount += 1;
 }
 
+void Shape::calculateFeaturesForCropedFrame(std::vector<cv::Point> &contour, std::map<std::string, double> &features)
+{
+	/// Approximate contour
+	double perimeter = arcLength(contour, true);
+	double epsilon = 0.02*perimeter;
+	std::vector<cv::Point> approx;
+	cv::approxPolyDP(contour, approx, epsilon, true);
+
+	//new optimation
+	if (approx.size() < 3)
+	{
+		return;
+	}
+	bool wasErased = false;
+	for (int n = 0; n < approx.size(); n++)
+	{
+		for (int j = 0; j < approx.size(); j++)
+		{
+			double dist1 = approx[n].x - approx[j].x;
+			double dist2 = approx[n].y - approx[j].y;
+			double tmpDistance =  cv::sqrt(dist1*dist1 + dist2*dist2);
+			if (tmpDistance < 3 && tmpDistance != 0)
+			{
+				approx.erase(approx.begin() + j);
+				//restart
+				n = 0;
+				j = 0;
+				wasErased = true;
+				break;
+			}
+		}
+	}
+	if (wasErased)
+	{
+		cv::convexHull(approx, approx);
+	}
+	if (approx.size() < 3)
+	{
+		return;
+	}
+
+	bool isClosed = cv::isContourConvex(approx);
+
+	/// Calculate basic features
+	double area = cv::contourArea(approx);
+	double sides = (double)approx.size();
+
+	/// Calculate moments of contour
+	cv::Moments curMnts = moments(approx, false);
+
+	cv::RotatedRect mbr = cv::minAreaRect(approx);
+	double mbrArea = mbr.size.area();
+	double roundness = 4 * PI*area / (perimeter*perimeter);
+	double rectangularity = area / mbrArea;
+	double eccentricity = (pow((curMnts.mu20 - curMnts.mu02), 2) - 4 * curMnts.mu11*curMnts.mu11) / pow((curMnts.mu20 + curMnts.mu02), 2);
+	double affineMomentInvariant = (curMnts.mu20*curMnts.mu02 - curMnts.mu11*curMnts.mu11) / pow(curMnts.m00, 4);
+	double triangularity;
+	if (affineMomentInvariant <= 1.0 / 108) {
+		triangularity = 108 * affineMomentInvariant;
+	}
+	else {
+		triangularity = 1 / (108 * affineMomentInvariant);
+	}
+	
+
+	features.clear();
+	features.insert(std::pair<std::string, double>("perimeter", perimeter));
+	features.insert(std::pair<std::string, double>("area", area));
+	features.insert(std::pair<std::string, double>("sides", sides));
+	features.insert(std::pair<std::string, double>("roundness", roundness));
+	features.insert(std::pair<std::string, double>("rectangularity", rectangularity));
+	features.insert(std::pair<std::string, double>("eccentricity", eccentricity));
+	features.insert(std::pair<std::string, double>("triangularity", triangularity));
+	features.insert(std::pair<std::string, double>("isClosed", isClosed));
+}
 void Shape::calculateFeatures(std::vector<cv::Point> &contour, std::map<std::string, double> &features)
 {
-
 	/// Approximate contour
 	double perimeter = arcLength(contour, true);
 	double epsilon = 0.02*perimeter;
@@ -106,37 +180,7 @@ void Shape::calculateFeatures(std::vector<cv::Point> &contour, std::map<std::str
 		}
 
 	}
-	if (approx.size() < 3)
-	{
-		return;
-	}
-	bool wasErased = false;
-	for (int n = 0; n < approx.size(); n++)
-	{
-		for (int j = 0; j < approx.size(); j++)
-		{
-			double dist1 = approx[n].x - approx[j].x;
-			double dist2 = approx[n].y - approx[j].y;
-			double tmpDistance =  cv::sqrt(dist1*dist1 + dist2*dist2);
-			if (tmpDistance < 5 && tmpDistance != 0)
-			{
-				approx.erase(approx.begin() + j);
-				//restart
-				n = 0;
-				j = 0;
-				wasErased = true;
-				break;
-			}
-		}
-	}
-	if (wasErased)
-	{
-		cv::convexHull(approx, approx);
-	}
-	if (approx.size() < 3)
-	{
-		return;
-	}
+	
 	bool isClosed = cv::isContourConvex(approx);
 
 	/// Calculate basic features
@@ -172,81 +216,76 @@ void Shape::calculateFeatures(std::vector<cv::Point> &contour, std::map<std::str
 	features.insert(std::pair<std::string, double>("isClosed", isClosed));
 }
 
-int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold, bool methode)
-{
-	int shapeType = SHAPE_NONE;
-	if (methode == false)
-	{
-		shapeType = Shape::classifyShape(contour, threshold);
-	}
-	else
-	{
-		std::map<std::string, double> features;
-		calculateFeatures(contour, features);
-		if (features["area"] > 100 && features["isClosed"] && features["eccentricity"] < 0.2)
-		{
-			if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
-			{
-				shapeType = SHAPE_TRIANGLE;
-			}
-			else if (features["rectangularity"] > Shape::prototypesFeatures[1][1]/100.0 && (features["sides"] == 4 || features["sides"] == 5))
-			{
-				shapeType = SHAPE_SQUARE;
-			}
-			else if (features["roundness"] > Shape::prototypesFeatures[3][0]/100.0 && features["sides"] == 8)
-			{
-				shapeType = SHAPE_CIRCLE;
-			}
-			else if (features["sides"] == 6 || features["sides"] == 7)
-			{
-				shapeType = SHAPE_HEXAGON;
-			}
-		}
-	}
-	return shapeType;
-}
 int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
 {
-	std::map<std::string, double> features;
-
-	calculateFeatures(contour, features);
-
-	const double featuresValues[4] = {
-		features["roundness"],
-		features["rectangularity"],
-		features["triangularity"],
-		features["sides"] / 8.0,
-	};
-
-	double resultDistance[4] = { 0 };
-
-	/// Classify shape
 	int shapeType = SHAPE_NONE;
-	if (features["area"] > MINIMAL_AREA && features["isClosed"] == true && features["eccentricity"] < 0.03) {
-		for (int shape_index = 0; shape_index<4; ++shape_index) {
-			for (int feature_index = 0; feature_index<4; ++feature_index) {
-				resultDistance[shape_index] += abs(featuresValues[feature_index] - (Shape::prototypesFeatures[shape_index][feature_index]/100.0));
-			}
+	std::map<std::string, double> features;
+	calculateFeatures(contour, features);
+	if (features["area"] > 100 && features["isClosed"] && features["eccentricity"] < 0.2)
+	{
+		if (features["triangularity"] > Shape::prototypesFeatures[0][2]/100.0 && features["triangularity"] < 1.0  && features["sides"] == 3)
+		{
+			shapeType = SHAPE_TRIANGLE;
 		}
-		double minValue = 10;
-		double minIndex = 0;
-		
-		for (int i = 0; i<4; ++i) {
-			if (resultDistance[i] < minValue) {
-				minValue = resultDistance[i];
-				minIndex = i;
-			}
+		else if (features["rectangularity"] > Shape::prototypesFeatures[1][1]/100.0 && (features["sides"] == 4 || features["sides"] == 5))
+		{
+			shapeType = SHAPE_SQUARE;
 		}
-		if (minValue <= threshold) {
-			//qDebug() << minIndex+1 << " -> " << minValue;
-			shapeType = SHAPE_NONE + minIndex + 1;
+		else if (features["roundness"] > Shape::prototypesFeatures[3][0]/100.0 && features["sides"] == 8)
+		{
+			shapeType = SHAPE_CIRCLE;
 		}
-	}
-	else {
-		shapeType = SHAPE_NONE;
+		else if (features["sides"] == 6 || features["sides"] == 7)
+		{
+			shapeType = SHAPE_HEXAGON;
+		}
 	}
 	return shapeType;
 }
+
+//old method
+//int Shape::classifyShape(std::vector<cv::Point> &contour, double threshold)
+//{
+//	std::map<std::string, double> features;
+//
+//	calculateFeatures(contour, features);
+//
+//	const double featuresValues[4] = {
+//		features["roundness"],
+//		features["rectangularity"],
+//		features["triangularity"],
+//		features["sides"] / 8.0,
+//	};
+//
+//	double resultDistance[4] = { 0 };
+//
+//	/// Classify shape
+//	int shapeType = SHAPE_NONE;
+//	if (features["area"] > MINIMAL_AREA && features["isClosed"] == true && features["eccentricity"] < 0.03) {
+//		for (int shape_index = 0; shape_index<4; ++shape_index) {
+//			for (int feature_index = 0; feature_index<4; ++feature_index) {
+//				resultDistance[shape_index] += abs(featuresValues[feature_index] - (Shape::prototypesFeatures[shape_index][feature_index]/100.0));
+//			}
+//		}
+//		double minValue = 10;
+//		double minIndex = 0;
+//		
+//		for (int i = 0; i<4; ++i) {
+//			if (resultDistance[i] < minValue) {
+//				minValue = resultDistance[i];
+//				minIndex = i;
+//			}
+//		}
+//		if (minValue <= threshold) {
+//			//qDebug() << minIndex+1 << " -> " << minValue;
+//			shapeType = SHAPE_NONE + minIndex + 1;
+//		}
+//	}
+//	else {
+//		shapeType = SHAPE_NONE;
+//	}
+//	return shapeType;
+//}
 
 int Shape::detectCentralShape(cv::Mat &image, cv::Point2f center, double radius, int threshold)
 {

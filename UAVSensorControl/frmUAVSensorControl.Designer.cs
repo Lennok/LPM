@@ -1464,7 +1464,7 @@ namespace UAVSensorControl
             "Ergebnis zeigen",
             "Einstellungen zeigen",
             "Bild auswählen",
-            "Figurenmerkmale anzeigen"});
+            "Alle Figuren anzeigen"});
             this.clbShowImage.Location = new System.Drawing.Point(1149, 110);
             this.clbShowImage.Name = "clbShowImage";
             this.clbShowImage.Size = new System.Drawing.Size(121, 90);

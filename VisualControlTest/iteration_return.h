@@ -17,10 +17,10 @@ typedef enum
 
 typedef enum
 {
-	TypeRectangle,
-	TypeCircle,
-	TypeTriangle,
-	TypeHexagon
+	TypeRectangle = 2,
+	TypeCircle = 4,
+	TypeTriangle  = 1,
+	TypeHexagon  = 3
 
 } figure_type;
 
