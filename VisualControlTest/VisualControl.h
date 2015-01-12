@@ -153,6 +153,12 @@ namespace VisualControlLib
 		bool in_picture_x(float coord);
 		bool in_picture_y(float coord);
 
+		bool check_missing(int shape, bool cross, bool clockwise, bool anticlockwise, int& x1, int& y1, int& x2, int& y2);
+		bool check_wrong_detected(int shape, int& expectedShape, int& x1, int& y1, int& x2, int& y2);
+
+		vector<Point> generate_line(float radangle, Point start);
+
+		Point find_intersection_point(vector<Point> line1, vector<Point> line2);
 
 	};
 }

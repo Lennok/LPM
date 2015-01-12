@@ -63,6 +63,9 @@ namespace VisualControlLib
 		static int classifyShape(std::vector<cv::Point> &contour, double threshold, bool method);
 		static int detectCentralShape(cv::Mat &image, cv::Point2f center, double radius, int threshold);
 
+		static int get_cross_neighbour(int shape);
+		static int get_clockwise_neighbour(int shape);
+		static int get_anticlockwise_neighbour(int shape);
 	};
 
 	

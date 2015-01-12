@@ -1,10 +1,15 @@
-﻿#include "VisualControl.h"
+﻿#define _USE_MATH_DEFINES
+
+#include <math.h>
+
+#include "VisualControl.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "iteration_return.h"
+
 
 //#include <opencv2/legacy/legacy.hpp>
 using namespace cv;
@@ -890,6 +895,269 @@ bool VisualControl::in_picture_x(float coord)
 	return true;
 }
 
+vector<Point> VisualControl::generate_line(float radangle, Point start)
+{
+	vector<Point> _line;
+
+	float xKoord = (float)start.x;
+	float yKoord = (float)start.y;
+
+	while (in_picture_x(xKoord), in_picture_y(yKoord))
+	{
+		_line.push_back(Point(xKoord, yKoord));
+
+		xKoord += 1.0f;
+		yKoord += radangle;
+	}
+
+
+	line(helper, start, _line[_line.size() - 1], Scalar(0, 0, 0));
+
+	xKoord = start.x;
+	yKoord = start.y;
+
+	while (in_picture_x(xKoord), in_picture_y(yKoord))
+	{
+		_line.push_back(Point(xKoord, yKoord));
+
+		xKoord -= 1.0f;
+		yKoord -= radangle;
+	}
+
+	line(helper, start, _line[_line.size() - 1] , Scalar(0, 0, 0));
+
+	imshow("OutputHelper", helper);
+
+	return _line;
+}
+
+Point  VisualControl::find_intersection_point(vector<Point> line1, vector<Point> line2)
+{
+	Point retVal (-1, -1);
+	float euclidean_distance = 100;
+
+	for (int i = 0; i < line1.size(); i++)
+	{
+		for (int j = 0; j < line2.size(); j++)
+		{
+			int deltaX = line1[i].x - line2[j].x;
+			int deltaY = line1[i].y - line2[j].y;
+
+			float local_distance = sqrt((float)(deltaX * deltaX + deltaY * deltaY));
+			if (local_distance < euclidean_distance)
+			{
+				retVal.x = line1[i].x;
+				retVal.y = line1[i].y;
+
+				euclidean_distance = local_distance;
+			}
+		}
+	}
+
+	return retVal;
+}
+
+bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool anticlockwise, int& x1, int& y1, int& x2, int& y2)
+{
+	switch (shape)
+	{
+		case SHAPE_TRIANGLE:
+			if (cross)
+			{
+				float distance_square_center_x = squareShape.shapeCenter.x - centerShape.shapeCenter.x;
+				float distance_square_center_y = squareShape.shapeCenter.y - centerShape.shapeCenter.y;
+
+				float triangle_center_x = centerShape.shapeCenter.x - distance_square_center_x;
+				float triangle_center_y = centerShape.shapeCenter.y - distance_square_center_y;
+
+
+				float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.35f;
+				float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.35f;
+
+				float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.35f;
+				float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.35f;
+
+				if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+					!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+				{
+					return false;
+				}
+
+				x1 = triangle_center_region_x1;
+				x2 = triangle_center_region_x2;
+
+				y1 = triangle_center_region_y1;
+				y2 = triangle_center_region_y2;
+				break;
+			}
+
+			calculatePlatformAngle();
+
+			if (clockwise)
+			{
+				float radAngle = tanf ((mPlaformAngle + 90) * M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle) *  M_PI / 180);
+
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, hexagonShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+
+				if (result.x != -1)
+				{
+					
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = hexagonShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = hexagonShape.shapeCenter.y - result.y;
+
+					float triangle_center_x = centerShape.shapeCenter.x + 
+						center_intersection_distance_x + background_intersection_distance_x;
+
+
+					float triangle_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y;
+
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.25f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.25f;
+
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.25f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.25f;
+
+					
+
+					if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+						!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = triangle_center_region_x1;
+					x2 = triangle_center_region_x2;
+
+					y1 = triangle_center_region_y1;
+					y2 = triangle_center_region_y2;
+
+					break;
+
+				}
+
+			}
+
+			if (anticlockwise)
+			{
+
+			}
+
+			break;
+
+		case SHAPE_HEXAGON:
+			if (cross)
+			{
+				float distance_circle_center_x = circleShape.shapeCenter.x - centerShape.shapeCenter.x;
+				float distance_circle_center_y = circleShape.shapeCenter.y - centerShape.shapeCenter.y;
+
+				float hexagon_center_x = centerShape.shapeCenter.x - distance_circle_center_x;
+				float hexagon_center_y = centerShape.shapeCenter.y - distance_circle_center_y;
+
+
+				float hexagon_center_region_x1 = hexagon_center_x - centerShape.shapeRadius * 1.35f;
+				float hexagon_center_region_x2 = hexagon_center_x + centerShape.shapeRadius * 1.35f;
+
+				float hexagon_center_region_y1 = hexagon_center_y - centerShape.shapeRadius * 1.35f;
+				float hexagon_center_region_y2 = hexagon_center_y + centerShape.shapeRadius * 1.35f;
+
+				if (!in_picture_x(hexagon_center_region_x1) || !in_picture_x(hexagon_center_region_x2) ||
+					!in_picture_y(hexagon_center_region_y1) || !in_picture_y(hexagon_center_region_y2))
+				{
+					return false;
+				}
+
+				x1 = hexagon_center_region_x1;
+				x2 = hexagon_center_region_x2;
+
+				y1 = hexagon_center_region_y1;
+				y2 = hexagon_center_region_y2;
+				break;
+			}
+
+			break;
+
+		case SHAPE_SQUARE:
+			if (cross)
+			{
+				float distance_square_center_x = triangleShape.shapeCenter.x - centerShape.shapeCenter.x;
+				float distance_square_center_y = triangleShape.shapeCenter.y - centerShape.shapeCenter.y;
+
+				float hexagon_center_x = centerShape.shapeCenter.x - distance_square_center_x;
+				float hexagon_center_y = centerShape.shapeCenter.y - distance_square_center_y;
+
+
+				float hexagon_center_region_x1 = hexagon_center_x - centerShape.shapeRadius * 1.35f;
+				float hexagon_center_region_x2 = hexagon_center_x + centerShape.shapeRadius * 1.35f;
+
+				float hexagon_center_region_y1 = hexagon_center_y - centerShape.shapeRadius * 1.35f;
+				float hexagon_center_region_y2 = hexagon_center_y + centerShape.shapeRadius * 1.35f;
+
+				if (!in_picture_x(hexagon_center_region_x1) || !in_picture_x(hexagon_center_region_x2) ||
+					!in_picture_y(hexagon_center_region_y1) || !in_picture_y(hexagon_center_region_y2))
+				{
+					return false;
+				}
+
+				x1 = hexagon_center_region_x1;
+				x2 = hexagon_center_region_x2;
+
+				y1 = hexagon_center_region_y1;
+				y2 = hexagon_center_region_y2;
+				break;
+			}
+
+			break;
+
+		case SHAPE_CIRCLE:
+			if (cross)
+			{
+				float distance_hexagon_center_x = hexagonShape.shapeCenter.x - centerShape.shapeCenter.x;
+				float distance_hexagon_center_y = hexagonShape.shapeCenter.y - centerShape.shapeCenter.y;
+
+				float circle_center_x = centerShape.shapeCenter.x - distance_hexagon_center_x;
+				float circle_center_y = centerShape.shapeCenter.y - distance_hexagon_center_y;
+
+
+				float circle_center_region_x1 = circle_center_x - centerShape.shapeRadius * 1.35f;
+				float circle_center_region_x2 = circle_center_x + centerShape.shapeRadius * 1.35f;
+
+				float circle_center_region_y1 = circle_center_y - centerShape.shapeRadius * 1.35f;
+				float circle_center_region_y2 = circle_center_y + centerShape.shapeRadius * 1.35f;
+
+				if (!in_picture_x(circle_center_region_x1) || !in_picture_x(circle_center_region_x2) ||
+					!in_picture_y(circle_center_region_y1) || !in_picture_y(circle_center_region_y2))
+				{
+					return false;
+				}
+
+				x1 = circle_center_region_x1;
+				x2 = circle_center_region_x2;
+
+				y1 = circle_center_region_y1;
+				y2 = circle_center_region_y2;
+				break;
+			}
+
+			break;
+	}
+	
+
+	return true;
+}
+bool VisualControl::check_wrong_detected(int shape, int& expectedShape, int& x1, int& y1, int& x2, int& y2)
+{
+	return false;
+}
+
 iteration_return_t * VisualControl::iterate_process_edge_shapes()
 {
 	double eucliadianDistance = 0;
@@ -899,6 +1167,7 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 	bool found[4] = { false, false, false, false };
 	iteration_return_t * retVal = new iteration_return_t();
 
+	retVal->state = Success;
 
 	if (shapes.size() == 0)
 	{
@@ -979,6 +1248,11 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 		return retVal;
 	}
 	
+	int x1, x2, y1, y2;
+	int expected_shape;
+
+	
+
 	for (int i = 1; i < 5; i++)
 	{
 		if (!found[i - 1])
@@ -990,9 +1264,25 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 					iteration_not_detected triangular;
 					triangular.expected_type = TypeTriangle;
 
+					bool bRetVal = check_missing(SHAPE_TRIANGLE, found[Shape::get_cross_neighbour(SHAPE_TRIANGLE) - 1],
+						found[Shape::get_clockwise_neighbour(SHAPE_TRIANGLE) - 1], found[Shape::get_anticlockwise_neighbour(SHAPE_TRIANGLE) - 1],
+						x1, y1, x2, y2);
+
+					if (bRetVal)
+					{
+						triangular.start_x = x1;
+						triangular.start_y = y1;
+
+						triangular.end_x = x2;
+						triangular.end_y = y2;
+
+						retVal->nr_of_no_detections++;
+						retVal->vector_not_detected.push_back(triangular);
+						retVal->state = (iteration_state)(retVal->state | BackgroundFigureMissing);
+					}
 
 					// ggü von Dreieck ist das Viereck
-					if (found[SHAPE_SQUARE - 1])
+					/*if (found[SHAPE_SQUARE - 1])
 					{
 						float distance_square_center_x = squareShape.shapeCenter.x - centerShape.shapeCenter.x;
 						float distance_square_center_y = squareShape.shapeCenter.y - centerShape.shapeCenter.y;
@@ -1001,11 +1291,11 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 						float triangle_center_y = centerShape.shapeCenter.y - distance_square_center_y;
 
 
-						float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.05;
-						float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.05;
+						float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.35f;
+						float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.35f;
 
-						float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.05;
-						float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.05;
+						float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.35f;
+						float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.35f;
 
 						if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
 							!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
@@ -1027,7 +1317,7 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 							retVal->state = BackgroundFigureMissing;
 						}
 
-					}
+					}*/
 
 
 				}
@@ -1036,11 +1326,25 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 
 				case SHAPE_SQUARE:
 				{
-					iteration_not_detected sqaure;
-					sqaure.expected_type = TypeRectangle;
+					iteration_not_detected square;
+					square.expected_type = TypeRectangle;
 
-					retVal->nr_of_no_detections++;
-					retVal->vector_not_detected.push_back(sqaure);
+					bool bRetVal = check_missing(SHAPE_SQUARE, found[Shape::get_cross_neighbour(SHAPE_SQUARE) - 1],
+						found[Shape::get_clockwise_neighbour(SHAPE_SQUARE) - 1], found[Shape::get_anticlockwise_neighbour(SHAPE_SQUARE) - 1],
+						x1, y1, x2, y2);
+
+					if (bRetVal)
+					{
+						square.start_x = x1;
+						square.start_y = y1;
+
+						square.end_x = x2;
+						square.end_y = y2;
+
+						retVal->nr_of_no_detections++;
+						retVal->vector_not_detected.push_back(square);
+						retVal->state = (iteration_state)(retVal->state | BackgroundFigureMissing);
+					}
 				}
 				break;
 				
@@ -1049,8 +1353,22 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 					iteration_not_detected hexagon;
 					hexagon.expected_type = TypeHexagon;
 
-					retVal->nr_of_no_detections++;
-					retVal->vector_not_detected.push_back(hexagon);
+					bool bRetVal = check_missing(SHAPE_HEXAGON, found[Shape::get_cross_neighbour(SHAPE_HEXAGON) - 1],
+						found[Shape::get_clockwise_neighbour(SHAPE_HEXAGON) - 1], found[Shape::get_anticlockwise_neighbour(SHAPE_HEXAGON) - 1],
+						x1, y1, x2, y2);
+
+					if (bRetVal)
+					{
+						hexagon.start_x = x1;
+						hexagon.start_y = y1;
+
+						hexagon.end_x = x2;
+						hexagon.end_y = y2;
+
+						retVal->nr_of_no_detections++;
+						retVal->vector_not_detected.push_back(hexagon);
+						retVal->state = (iteration_state)(retVal->state | BackgroundFigureMissing);
+					}
 				}
 				break;
 				
@@ -1059,8 +1377,25 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 					iteration_not_detected circle;
 					circle.expected_type = TypeCircle;
 
+					bool bRetVal = check_missing(SHAPE_CIRCLE, found[Shape::get_cross_neighbour(SHAPE_CIRCLE) - 1],
+						found[Shape::get_clockwise_neighbour(SHAPE_CIRCLE) - 1], found[Shape::get_anticlockwise_neighbour(SHAPE_CIRCLE) - 1],
+						x1, y1, x2, y2);
+
+					if (bRetVal)
+					{
+						circle.start_x = x1;
+						circle.start_y = y1;
+
+						circle.end_x = x2;
+						circle.end_y = y2;
+
+						retVal->nr_of_no_detections++;
+						retVal->vector_not_detected.push_back(circle);
+						retVal->state = (iteration_state)(retVal->state | BackgroundFigureMissing);
+					}
+
 					// ggü. des Kreises liegt das Hexagon
-					if (found[SHAPE_HEXAGON - 1])
+					/*if (found[SHAPE_HEXAGON - 1])
 					{
 						float distance_hexagon_center_x = hexagonShape.shapeCenter.x - centerShape.shapeCenter.x;
 						float distance_hexagon_center_y = hexagonShape.shapeCenter.y - centerShape.shapeCenter.y;
@@ -1069,11 +1404,11 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 						float circle_center_y = centerShape.shapeCenter.y - distance_hexagon_center_y;
 
 
-						float circle_center_region_x1 = circle_center_x - centerShape.shapeRadius * 1.05;
-						float circle_center_region_x2 = circle_center_x + centerShape.shapeRadius * 1.05;
+						float circle_center_region_x1 = circle_center_x - centerShape.shapeRadius * 1.35f;
+						float circle_center_region_x2 = circle_center_x + centerShape.shapeRadius * 1.35f;
 
-						float circle_center_region_y1 = circle_center_y - centerShape.shapeRadius * 1.05;
-						float circle_center_region_y2 = circle_center_y + centerShape.shapeRadius * 1.05;
+						float circle_center_region_y1 = circle_center_y - centerShape.shapeRadius * 1.35f;
+						float circle_center_region_y2 = circle_center_y + centerShape.shapeRadius * 1.35f;
 
 						if (!in_picture_x(circle_center_region_x1) || !in_picture_x(circle_center_region_x2) ||
 							!in_picture_y(circle_center_region_y1) || !in_picture_y(circle_center_region_y2))
@@ -1094,7 +1429,7 @@ iteration_return_t * VisualControl::iterate_process_edge_shapes()
 							retVal->state = BackgroundFigureMissing;
 						}
 
-					}
+					}*/
 				}
 				break;
 
@@ -1229,7 +1564,8 @@ void VisualControl::doDetection()
 
 	for (int i = 0; i < retVal->nr_of_no_detections; i++)
 	{
-		rectangle(helper, Rect(Point(retVal->vector_not_detected[i].start_x, retVal->vector_not_detected[i].start_y), Point(retVal->vector_not_detected[i].end_x, retVal->vector_not_detected[i].end_y)), SHAPE_COLORS[0]);
+		rectangle(helper, Rect(Point(retVal->vector_not_detected[i].start_x, retVal->vector_not_detected[i].start_y), 
+			Point(retVal->vector_not_detected[i].end_x, retVal->vector_not_detected[i].end_y)), SHAPE_COLORS[0]);
 	}
 
 	/// Draw contour

@@ -271,3 +271,58 @@ int Shape::detectCentralShape(cv::Mat &image, cv::Point2f center, double radius,
 	}
 	return count;
 }
+
+int Shape::get_cross_neighbour(int shape)
+{
+	switch (shape)
+	{
+		case SHAPE_TRIANGLE:
+			return SHAPE_SQUARE;
+
+		case SHAPE_SQUARE:
+			return SHAPE_TRIANGLE;
+
+		case SHAPE_HEXAGON:
+			return SHAPE_CIRCLE;
+
+		case SHAPE_CIRCLE:
+			return SHAPE_HEXAGON;
+	}
+}
+
+
+int Shape::get_clockwise_neighbour(int shape)
+{
+	switch (shape)
+	{
+		case SHAPE_TRIANGLE:
+			return SHAPE_HEXAGON;
+
+		case SHAPE_SQUARE:
+			return SHAPE_CIRCLE;
+
+		case SHAPE_HEXAGON:
+			return SHAPE_SQUARE;
+
+		case SHAPE_CIRCLE:
+			return SHAPE_TRIANGLE;
+	}
+}
+
+int Shape::get_anticlockwise_neighbour(int shape)
+{
+	switch (shape)
+	{
+		case SHAPE_TRIANGLE:
+			return SHAPE_CIRCLE;
+
+		case SHAPE_SQUARE:
+			return SHAPE_HEXAGON;
+
+		case SHAPE_HEXAGON:
+			return SHAPE_TRIANGLE;
+
+		case SHAPE_CIRCLE:
+			return SHAPE_SQUARE;
+	}
+}
