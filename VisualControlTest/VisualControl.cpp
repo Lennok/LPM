@@ -1109,9 +1109,12 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 		return false;
 	}
 
+	calculatePlatformAngle();
+
 	switch (shape)
 	{
 		case SHAPE_TRIANGLE:
+
 			if (cross)
 			{
 				float distance_square_center_x = squareShape.shapeCenter.x - centerShape.shapeCenter.x;
@@ -1121,11 +1124,11 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 				float triangle_center_y = centerShape.shapeCenter.y - distance_square_center_y;
 
 
-				float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.35f;
-				float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.35f;
+				float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.25f;
+				float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.25f;
 
-				float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.35f;
-				float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.35f;
+				float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.25f;
+				float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.25f;
 
 				if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
 					!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
@@ -1141,9 +1144,8 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 				break;
 			}
 
-			calculatePlatformAngle();
 
-			if (clockwise)
+			else if (clockwise)
 			{
 				float radAngle = tanf ((mPlaformAngle + 90) * M_PI / 180);
 				float radAngleClockwise = tanf((mPlaformAngle) *  M_PI / 180);
@@ -1156,7 +1158,9 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 
 				if (result.x != -1)
 				{
-					
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
 					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
 					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
 
@@ -1170,11 +1174,11 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 					float triangle_center_y = centerShape.shapeCenter.y +
 						center_intersection_distance_y + background_intersection_distance_y;
 
-					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.25f;
-					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.25f;
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.3f;
 
-					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.25f;
-					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.25f;
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.3f;
 
 					
 
@@ -1196,14 +1200,69 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 
 			}
 
-			if (anticlockwise)
+			else if (anticlockwise)
 			{
+				float radAngle = tanf((mPlaformAngle) * M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle + 90)*  M_PI / 180);
 
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, circleShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+				
+
+				if (result.x != -1)
+				{
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = circleShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = circleShape.shapeCenter.y - result.y;
+
+					float triangle_center_x = centerShape.shapeCenter.x +
+						center_intersection_distance_x + background_intersection_distance_x;
+
+
+					float triangle_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y;
+
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.3f;
+
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.3f;
+
+
+
+					if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+						!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = triangle_center_region_x1;
+					x2 = triangle_center_region_x2;
+
+					y1 = triangle_center_region_y1;
+					y2 = triangle_center_region_y2;
+
+					break;
+
+				}
+			}
+			else
+			{
+				return false;
 			}
 
 			break;
 
 		case SHAPE_HEXAGON:
+			
 			if (cross)
 			{
 				float distance_circle_center_x = circleShape.shapeCenter.x - centerShape.shapeCenter.x;
@@ -1230,6 +1289,120 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 
 				y1 = hexagon_center_region_y1;
 				y2 = hexagon_center_region_y2;
+			}
+
+			else if (clockwise)
+			{
+				float radAngle = tanf((mPlaformAngle + 90) * M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle)*  M_PI / 180);
+
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, squareShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+
+				if (result.x != -1)
+				{
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = squareShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = squareShape.shapeCenter.y - result.y;
+
+					float triangle_center_x = centerShape.shapeCenter.x +
+						center_intersection_distance_x + background_intersection_distance_x;
+
+
+					float triangle_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y;
+
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.3f;
+
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.3f;
+
+
+
+					if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+						!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = triangle_center_region_x1;
+					x2 = triangle_center_region_x2;
+
+					y1 = triangle_center_region_y1;
+					y2 = triangle_center_region_y2;
+
+					break;
+
+				}
+
+			}
+
+			else if (anticlockwise)
+			{
+				float radAngle = tanf((mPlaformAngle)* M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle + 90)*  M_PI / 180);
+
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, triangleShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+
+
+				if (result.x != -1)
+				{
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = triangleShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = triangleShape.shapeCenter.y - result.y;
+
+					float triangle_center_x = centerShape.shapeCenter.x +
+						center_intersection_distance_x + background_intersection_distance_x + 2.0f;
+
+
+					float triangle_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y - 2.0f;
+
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.35f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.35f;
+
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.35f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.35f;
+
+
+
+					if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+						!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = triangle_center_region_x1;
+					x2 = triangle_center_region_x2;
+
+					y1 = triangle_center_region_y1;
+					y2 = triangle_center_region_y2;
+
+					break;
+
+				}
+			}
+			else
+			{
+				return false;
 			}
 
 			break;
@@ -1263,6 +1436,120 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 				y2 = hexagon_center_region_y2;
 			}
 
+			else if (clockwise)
+			{
+				float radAngle = tanf((mPlaformAngle + 90) * M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle)*  M_PI / 180);
+
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, circleShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+
+				if (result.x != -1)
+				{
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = circleShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = circleShape.shapeCenter.y - result.y;
+
+					float square_center_x = centerShape.shapeCenter.x +
+						center_intersection_distance_x + background_intersection_distance_x;
+
+
+					float square_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y;
+
+					float square_center_region_x1 = square_center_x - centerShape.shapeRadius * 1.25f;
+					float square_center_region_x2 = square_center_x + centerShape.shapeRadius * 1.25f;
+
+					float square_center_region_y1 = square_center_y - centerShape.shapeRadius * 1.25f;
+					float square_center_region_y2 = square_center_y + centerShape.shapeRadius * 1.25f;
+
+
+
+					if (!in_picture_x(square_center_region_x1) || !in_picture_x(square_center_region_x2) ||
+						!in_picture_y(square_center_region_y1) || !in_picture_y(square_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = square_center_region_x1;
+					x2 = square_center_region_x2;
+
+					y1 = square_center_region_y1;
+					y2 = square_center_region_y2;
+
+					break;
+
+				}
+
+			}
+
+			else if (anticlockwise)
+			{
+				float radAngle = tanf((mPlaformAngle)* M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle + 90)*  M_PI / 180);
+
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, hexagonShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+
+
+				if (result.x != -1)
+				{
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = hexagonShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = hexagonShape.shapeCenter.y - result.y;
+
+					float triangle_center_x = centerShape.shapeCenter.x +
+						center_intersection_distance_x + background_intersection_distance_x;
+
+
+					float triangle_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y;
+
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.3f;
+
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.3f;
+
+
+
+					if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+						!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = triangle_center_region_x1;
+					x2 = triangle_center_region_x2;
+
+					y1 = triangle_center_region_y1;
+					y2 = triangle_center_region_y2;
+
+					break;
+
+				}
+			}
+			else
+			{
+				return false;
+			}
+
 			break;
 
 		case SHAPE_CIRCLE:
@@ -1275,11 +1562,11 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 				float circle_center_y = centerShape.shapeCenter.y - distance_hexagon_center_y;
 
 
-				float circle_center_region_x1 = circle_center_x - centerShape.shapeRadius * 1.35f;
-				float circle_center_region_x2 = circle_center_x + centerShape.shapeRadius * 1.35f;
+				float circle_center_region_x1 = circle_center_x - centerShape.shapeRadius * 1.25f;
+				float circle_center_region_x2 = circle_center_x + centerShape.shapeRadius * 1.25f;
 
-				float circle_center_region_y1 = circle_center_y - centerShape.shapeRadius * 1.35f;
-				float circle_center_region_y2 = circle_center_y + centerShape.shapeRadius * 1.35f;
+				float circle_center_region_y1 = circle_center_y - centerShape.shapeRadius * 1.25f;
+				float circle_center_region_y2 = circle_center_y + centerShape.shapeRadius * 1.25f;
 
 				if (!in_picture_x(circle_center_region_x1) || !in_picture_x(circle_center_region_x2) ||
 					!in_picture_y(circle_center_region_y1) || !in_picture_y(circle_center_region_y2))
@@ -1294,12 +1581,127 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 				y2 = circle_center_region_y2;
 			}
 
+			else if (clockwise)
+			{
+				float radAngle = tanf((mPlaformAngle + 90) * M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle)*  M_PI / 180);
+
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, triangleShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+
+				if (result.x != -1)
+				{
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = triangleShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = triangleShape.shapeCenter.y - result.y;
+
+					float triangle_center_x = centerShape.shapeCenter.x +
+						center_intersection_distance_x + background_intersection_distance_x;
+
+
+					float triangle_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y;
+
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.3f;
+
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.3f;
+
+
+
+					if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+						!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = triangle_center_region_x1;
+					x2 = triangle_center_region_x2;
+
+					y1 = triangle_center_region_y1;
+					y2 = triangle_center_region_y2;
+
+					break;
+
+				}
+
+			}
+
+			else if (anticlockwise)
+			{
+				float radAngle = tanf((mPlaformAngle)* M_PI / 180);
+				float radAngleClockwise = tanf((mPlaformAngle + 90)*  M_PI / 180);
+
+				// generate vector pixelwise
+				vector<Point> line1 = generate_line(radAngle, centerShape.shapeCenter);
+				vector<Point> line2 = generate_line(radAngleClockwise, squareShape.shapeCenter);
+
+				Point result = find_intersection_point(line1, line2);
+
+
+				if (result.x != -1)
+				{
+					circle(helper, result, 2, Scalar(0, 255, 0), 2);
+					imshow("OutputHelper", helper);
+
+					float center_intersection_distance_x = centerShape.shapeCenter.x - result.x;
+					float center_intersection_distance_y = centerShape.shapeCenter.y - result.y;
+
+					float background_intersection_distance_x = squareShape.shapeCenter.x - result.x;
+					float background_intersection_distance_y = squareShape.shapeCenter.y - result.y;
+
+					float triangle_center_x = centerShape.shapeCenter.x +
+						center_intersection_distance_x + background_intersection_distance_x;
+
+
+					float triangle_center_y = centerShape.shapeCenter.y +
+						center_intersection_distance_y + background_intersection_distance_y;
+
+					float triangle_center_region_x1 = triangle_center_x - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_x2 = triangle_center_x + centerShape.shapeRadius * 1.3f;
+
+					float triangle_center_region_y1 = triangle_center_y - centerShape.shapeRadius * 1.3f;
+					float triangle_center_region_y2 = triangle_center_y + centerShape.shapeRadius * 1.3f;
+
+
+
+					if (!in_picture_x(triangle_center_region_x1) || !in_picture_x(triangle_center_region_x2) ||
+						!in_picture_y(triangle_center_region_y1) || !in_picture_y(triangle_center_region_y2))
+					{
+						return false;
+					}
+
+					x1 = triangle_center_region_x1;
+					x2 = triangle_center_region_x2;
+
+					y1 = triangle_center_region_y1;
+					y2 = triangle_center_region_y2;
+
+					break;
+
+				}
+			}
+			else
+			{
+				return false;
+			}
+
 			break;
 	}
 	
 
 	return true;
 }
+
 bool VisualControl::check_wrong_detected(int shape, int& expectedShape, int& x1, int& y1, int& x2, int& y2)
 {
 	return false;
