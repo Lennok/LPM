@@ -263,7 +263,6 @@ void VisualControl::preprocessImage(Mat &frame) {
 	
 }
 
-
 void VisualControl::processContours(Mat &frame)
 {
 	vector<vector<Point> > contours;
@@ -310,7 +309,6 @@ void VisualControl::processContours(Mat &frame)
 		imshow("All Shapes", allFiguresFrame);
 	}	
 }
-
 
 void VisualControl::processContours(Mat frame, iteration_not_detected newPictureFrame)
 {
@@ -423,6 +421,7 @@ void VisualControl::processContours(Mat frame, iteration_not_detected newPicture
 	
 
 }
+
 void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPictureFrame)
 {
 	//Crop Pic
@@ -533,7 +532,6 @@ void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPict
 	}	
 }
 
-
 void VisualControl::processShapes() {
 	/// Clear formes arraysS
 	triangles.clear();
@@ -590,7 +588,6 @@ void VisualControl::processShapes() {
 		mDataValid = false;
 	}
 }
-
 
 void VisualControl::drawShapes() {
 	shapes.clear();
@@ -892,7 +889,6 @@ float VisualControl::calculateAltitude() {
 	return 0;
 }
 
-
 void VisualControl::calculateOffset() {
 	if (centerShape.shapeArea > 0) {
 		double x = (1 - (2 * centerShape.shapeCenter.x / frameWidth)) * 100;
@@ -908,7 +904,6 @@ void VisualControl::calculateOffset() {
 		mPlatformOffsetY = y;
 	}
 }
-
 
 double VisualControl::calculateAngle(Shape &item) {
 	double x = item.shapeCenter.x - centerShape.shapeCenter.x;
