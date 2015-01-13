@@ -1984,7 +1984,7 @@ namespace UAVSensorControl
                 butVideoStart.PerformClick();
             }
 
-            visualControl.setWriteProtocol(cbowriteprotocol.Checked);
+            visualControl.setWriteHtmlProtocol(cbowriteprotocol.Checked);
         }
 
       
