@@ -64,7 +64,7 @@ VisualControl::VisualControl(int CameraIndex)
 	SETTINGS_WINDOW = "Settings" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	cvNamedWindow("OutputHelper", CV_WINDOW_AUTOSIZE);
 	capture = NULL;
-	showAllFigures = true;
+	showAllFigures = false;
 
 }
 
@@ -300,7 +300,7 @@ void VisualControl::processContours(Mat &frame)
 			shapes.push_back(temp);
 		}			
 	}
-	if (showAllFigures)
+	if (showAllFigures || writeHtmlProtocol)
 	{
 		///Draw shapes
 		vector<vector<Point> > resultContours;
@@ -314,7 +314,11 @@ void VisualControl::processContours(Mat &frame)
 		putText(allFiguresFrame, "Gruen -> Dreieck", Point(1, 55), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
 		putText(allFiguresFrame, "Blau -> Hexagon", Point(1, 70), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
 		putText(allFiguresFrame, "Lila -> nach Iteration gefunden", Point(1, 85), FONT_HERSHEY_PLAIN, 1, Scalar(28, 232, 0), 1, 8);
-		imshow("All Shapes", allFiguresFrame);
+		
+		if (showAllFigures)
+		{
+			imshow("All Shapes", allFiguresFrame);
+		}
 	}	
 }
 
@@ -2185,8 +2189,10 @@ void VisualControl::doDetection()
 		}
 	}
 
-
-	do_logging(retVal->state != Success);
+	if (writeHtmlProtocol)
+	{
+		do_logging(retVal->state != Success);
+	}
 
 	delete retVal;
 
