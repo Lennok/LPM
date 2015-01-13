@@ -80,6 +80,7 @@ namespace VisualControlLib
 		string VisualControl::GRAY_WINDOW;
 		string VisualControl::SETTINGS_WINDOW;
 
+		FILE * _fpLogfile;
 
 		CvCapture* capture;
 
@@ -110,6 +111,8 @@ namespace VisualControlLib
 		double center_detect_radius;
 		int raduis_coef;
 		int class_threshold;
+
+		char log_filename[150];
 
 
 		/// Variables to save files
@@ -159,6 +162,9 @@ namespace VisualControlLib
 
 		Point find_intersection_point(vector<Point> line1, vector<Point> line2);
 		float calc_euclidean_distance(Shape s);
+
+		bool do_logging(bool iteration_needed);
+		bool finish_logfile();
 
 	};
 }

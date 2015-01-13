@@ -36,8 +36,10 @@ VisualControl::VisualControl(int CameraIndex)
 	mPlatformOffsetX = 0;
 	mPlatformOffsetY = 0;
 	mPlatformRelativeAltitude = 0;
-	mlogVideo = false;
+	mlogVideo = true;
 	outputVideo = NULL;
+
+	_fpLogfile = NULL;
 
 	mCameraIndex = CameraIndex;
 	
@@ -62,7 +64,7 @@ VisualControl::VisualControl(int CameraIndex)
 	SETTINGS_WINDOW = "Settings" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	cvNamedWindow("OutputHelper", CV_WINDOW_AUTOSIZE);
 	capture = NULL;
-	showAllFigures = false;
+	showAllFigures = true;
 
 }
 
@@ -2149,6 +2151,7 @@ void VisualControl::doDetection()
 
 	/// Draw contour
 	imshow("OutputHelper", helper);
+
 	Mat original = src.clone();
 	if ((retVal->state & BackgroundFigureMissing) == BackgroundFigureMissing )
 	{
@@ -2156,7 +2159,6 @@ void VisualControl::doDetection()
 		{
 			processContours(original, retVal->vector_not_detected[i]);
 		}
-		
 	}
 
 	if ( (retVal->state & WrongFigureDetected) == WrongFigureDetected)
@@ -2165,13 +2167,11 @@ void VisualControl::doDetection()
 		{
 			processContours(original, retVal->vector_wrong_detected[i]);
 		}
-		
 	}
 
 	// Winkelschätzung mit den neuen Figuren
 	calculatePlatformAngle();
-
-	delete retVal;
+	calculateAltitude();
 
 	/// Show in a window
 	if (ShowResultImage || this->mlogVideo)
@@ -2184,6 +2184,11 @@ void VisualControl::doDetection()
 			this->outputVideo->write( drawing);
 		}
 	}
+
+
+	do_logging(retVal->state != Success);
+
+	delete retVal;
 
 	/// Calculate time
 	//t = ((double)getTickCount() - t)/getTickFrequency();
@@ -2214,4 +2219,153 @@ void VisualControl::setVideoLogging(bool log, String logDirectory)
 
 }
 
+
+#include <ctime>
+#include <cwchar>
+
+#include <direct.h>
+
+bool VisualControl::do_logging(bool iteration_needed)
+{
+	int x_size = 0;
+	int y_size = 0;
+
+	if (mCameraIndex == 0)
+	{
+		x_size = 320;
+		y_size = 240;
+	}
+
+	if (mCameraIndex == 1)
+	{
+		x_size = 320;
+		y_size = 180;
+	}
+
+	if (_fpLogfile == NULL)
+	{
+		wchar_t buffer[250];
+		wchar_t tmpbuffer[150];
+		char currentWorkingDirectory[200];
+		
+
+		time_t t = time(0);  
+		struct tm * now = localtime(&t);
+
+		_getcwd(currentWorkingDirectory, sizeof(currentWorkingDirectory));
+		
+		mbstowcs(tmpbuffer, currentWorkingDirectory, sizeof(tmpbuffer));
+
+		swprintf(buffer, L"%s\\%04d-%02d-%02d_%02d-%02d-%02d", tmpbuffer, (now->tm_year + 1900), now->tm_mon + 1,
+			now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+
+		sprintf(log_filename, "%s\\%04d-%02d-%02d_%02d-%02d-%02d", currentWorkingDirectory, (now->tm_year + 1900), now->tm_mon + 1,
+			now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+
+		CreateDirectory(buffer, NULL);
+
+		swprintf(buffer, L"%s%s", buffer, L"\\Pictures");
+
+		CreateDirectory(buffer, NULL);
+
+		
+		_fpLogfile = fopen(string(string(log_filename) + "\\protocol.html").c_str(), "w+");
+		if (_fpLogfile == NULL)
+		{
+			return false;
+		}
+
+		fprintf(_fpLogfile, "<!DOCTYPE HTML PUBLIC \" -//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd \">\n");
+		fprintf(_fpLogfile, "<html>\n");
+		fprintf(_fpLogfile, "\t<head>\n");
+		fprintf(_fpLogfile, "\t\t<title>Protokoll</title>\n");
+		fprintf(_fpLogfile, "\t</head>\n");
+
+
+		fprintf(_fpLogfile, "\t<body>\n");
+		fprintf(_fpLogfile, "\t\t<h3>Protokoll UAVControl mit Kamera: %s</h3>\n\n", (mCameraIndex == 0) ? "Flycam" : "GoPro");
+
+
+		fprintf(_fpLogfile, "\t\t<table border=\"1\">\n");
+		fprintf(_fpLogfile, "\t\t\t<thead>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Original Bild</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>LPM - Erkennung</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Missing Erkennung</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Figurenerkennung</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Iteration benoetigt</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Winkel berechnet</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Hoehe berechnet</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>THR</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>CCOEF</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>MED</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>CDT</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>RCOEF</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>CLSTHR</th>\n");
+		fprintf(_fpLogfile, "\t\t\t</thead>\n\n");
+	}
+
+	fprintf(_fpLogfile, "\t\t\t<tr>\n");
+
+	// dump all pcitures to file
+	time_t t = time(0);
+	struct tm * now = localtime(&t);
+
+	char current_time[100];
+	sprintf(current_time, "%4d-%02d-%02d_%02d-%02d-%02d", (now->tm_year + 1900), now->tm_mon + 1,
+		now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+
+	char picture_names[200];
+	
+	strcpy (picture_names, string(string(log_filename) + string ("\\Pictures\\") + string(current_time)).c_str());
+
+	imwrite(string(string(picture_names) + "_orig.jpg").c_str(), src);
+	imwrite(string(string(picture_names) + "_all_figs.jpg").c_str(), allFiguresFrame);
+	imwrite(string(string(picture_names) + "_iteration_detection.jpg").c_str(), helper);
+	imwrite(string(string(picture_names) + "_detection.jpg").c_str(), drawing);
+	
+
+	fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string ("Pictures\\") + string(current_time) + "_orig.jpg").c_str(), x_size, y_size);
+	fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string("Pictures\\") + string(current_time) + "_detection.jpg").c_str(), x_size, y_size);
+
+	if (iteration_needed)
+	{ 
+		fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string("Pictures\\") + string(current_time) + "_iteration_detection.jpg").c_str(), x_size, y_size);
+		fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string("Pictures\\") + string(current_time) + "_all_figs.jpg").c_str(), x_size, y_size);
+		fprintf(_fpLogfile, "\t\t\t\t<td>true</td>\n");
+	}
+	else
+	{
+		fprintf(_fpLogfile, "\t\t\t\t<td></td>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<td></td>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<td>false</td>\n");
+	}
+	
+	fprintf(_fpLogfile, "\t\t\t\t<td>%.3f</td>\n", mPlaformAngle);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%.3f</td>\n", mPlatformAltitude);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", thresh);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", color_coeff);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", min_eucl_dist);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", center_detect_threshold);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", raduis_coef);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", class_threshold);
+
+	fprintf(_fpLogfile, "\t\t\t</tr>\n\n");
+
+
+
+	return true;
+}
+
+
+bool VisualControl::finish_logfile()
+{
+	if (_fpLogfile == NULL)
+	{
+		return false;
+	}
+	fprintf(_fpLogfile, "\t\t</table>\n");
+	fprintf(_fpLogfile, "\t</body>\n");
+	fprintf(_fpLogfile, "</html>\n");
+
+}
 /// end private functions  //////////////////////////////////////////
