@@ -157,6 +157,7 @@ namespace VisualControlLib
 		vector<Point> generate_line(float radangle, Point start);
 
 		Point find_intersection_point(vector<Point> line1, vector<Point> line2);
+		float calc_euclidean_distance(Shape s);
 
 	};
 }

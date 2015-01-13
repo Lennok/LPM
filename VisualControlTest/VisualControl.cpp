@@ -1700,9 +1700,111 @@ bool VisualControl::check_missing(int shape, bool cross, bool clockwise, bool an
 	return true;
 }
 
+float VisualControl::calc_euclidean_distance(Shape s)
+{
+	if (s.shapeCenter.x == 0 || s.shapeCenter.y == 0)
+	{
+		return -1.0f;
+	}
+	float x_distance = abs(s.shapeCenter.x - centerShape.shapeCenter.x);
+	float y_distance = abs(s.shapeCenter.y - centerShape.shapeCenter.y);
+
+	float euclideanDistance =
+		sqrt(float((x_distance * x_distance) + (y_distance * y_distance)));
+
+	return euclideanDistance;
+}
+
 bool VisualControl::check_wrong_detected(int shape, int& expectedShape, int& x1, int& y1, int& x2, int& y2)
 {
-	return false;
+
+	float triangle_distance = calc_euclidean_distance(triangleShape);
+
+	float square_distance = calc_euclidean_distance(squareShape);
+	float circle_distance = calc_euclidean_distance(circleShape);
+	float hexagon_distance = calc_euclidean_distance(hexagonShape);
+
+
+	float array_distances[4] = { triangle_distance, square_distance , hexagon_distance, circle_distance };
+	int start = 0;
+
+	if (circle_distance != -1.0f)
+	{
+		start = 4;
+	}
+
+	else if (hexagon_distance != -1.0f)
+	{
+		start = 4;
+	}
+
+	else if (square_distance != -1.0f)
+	{
+		start = 2;
+	}
+
+	else if (triangle_distance != -1.0f)
+	{
+		start = 1;
+	}
+	else
+	{
+		return false;
+	}
+
+	for (int i = start; i < 4; i++)
+	{
+		if (array_distances[start - 1]  > array_distances[i] * 1.2f)
+		{
+			expectedShape = i + 1;
+
+			switch (expectedShape)
+			{
+				case SHAPE_CIRCLE:
+					x1 = circleShape.shapeCenter.x - centerShape.shapeRadius * 1.3f;
+					x2 = circleShape.shapeCenter.x + centerShape.shapeRadius * 1.3f;
+
+
+					y1 = circleShape.shapeCenter.y - centerShape.shapeRadius * 1.3f;
+					y2 = circleShape.shapeCenter.y + centerShape.shapeRadius * 1.3f;
+
+					break;
+
+				case SHAPE_SQUARE:
+					x1 = squareShape.shapeCenter.x - centerShape.shapeRadius * 1.3f;
+					x2 = squareShape.shapeCenter.x + centerShape.shapeRadius * 1.3f;
+
+
+					y1 = squareShape.shapeCenter.y - centerShape.shapeRadius * 1.3f;
+					y2 = squareShape.shapeCenter.y + centerShape.shapeRadius * 1.3f;
+					break;
+
+				case SHAPE_HEXAGON:
+					x1 = hexagonShape.shapeCenter.x - centerShape.shapeRadius * 1.3f;
+					x2 = hexagonShape.shapeCenter.x + centerShape.shapeRadius * 1.3f;
+
+
+					y1 = hexagonShape.shapeCenter.y - centerShape.shapeRadius * 1.3f;
+					y2 = hexagonShape.shapeCenter.y + centerShape.shapeRadius * 1.3f;
+					break;
+
+				case SHAPE_TRIANGLE:
+					x1 = triangleShape.shapeCenter.x - centerShape.shapeRadius * 1.3f;
+					x2 = triangleShape.shapeCenter.x + centerShape.shapeRadius * 1.3f;
+
+
+					y1 = triangleShape.shapeCenter.y - centerShape.shapeRadius * 1.3f;
+					y2 = triangleShape.shapeCenter.y + centerShape.shapeRadius * 1.3f;
+					break;
+
+			}
+
+		}
+	}
+
+	
+
+	return true;
 }
 
 iteration_return_t * VisualControl::iterate_process_edge_shapes()

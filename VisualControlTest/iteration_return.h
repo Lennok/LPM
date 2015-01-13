@@ -20,7 +20,8 @@ typedef enum
 	TypeRectangle = 2,
 	TypeCircle = 4,
 	TypeTriangle  = 1,
-	TypeHexagon  = 3
+	TypeHexagon  = 3,
+	TypeUnknown = 5
 
 } figure_type;
 
