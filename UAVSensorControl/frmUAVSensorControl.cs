@@ -1977,6 +1977,16 @@ namespace UAVSensorControl
             }
         }
 
+        private void cbowriteprotocol_CheckedChanged(object sender, EventArgs e)
+        {
+            if (visualControl == null)
+            {
+                butVideoStart.PerformClick();
+            }
+
+            visualControl.setWriteProtocol(cbowriteprotocol.Checked);
+        }
+
       
 
     }

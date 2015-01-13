@@ -185,6 +185,7 @@ namespace UAVSensorControl
             this.cbShowCompare = new System.Windows.Forms.CheckBox();
             this.comboCameraType = new System.Windows.Forms.ComboBox();
             this.btReplay = new System.Windows.Forms.Button();
+            this.cbowriteprotocol = new System.Windows.Forms.CheckBox();
             this.gBoxStruct.SuspendLayout();
             this.gBoxSettingManual.SuspendLayout();
             this.gBoxLeftStick.SuspendLayout();
@@ -1643,11 +1644,23 @@ namespace UAVSensorControl
             this.btReplay.UseVisualStyleBackColor = true;
             this.btReplay.Click += new System.EventHandler(this.btReplay_Click);
             // 
+            // cbowriteprotocol
+            // 
+            this.cbowriteprotocol.AutoSize = true;
+            this.cbowriteprotocol.Location = new System.Drawing.Point(1003, 271);
+            this.cbowriteprotocol.Name = "cbowriteprotocol";
+            this.cbowriteprotocol.Size = new System.Drawing.Size(133, 17);
+            this.cbowriteprotocol.TabIndex = 33;
+            this.cbowriteprotocol.Text = "Html Protokoll erstellen";
+            this.cbowriteprotocol.UseVisualStyleBackColor = true;
+            this.cbowriteprotocol.CheckedChanged += new System.EventHandler(this.cbowriteprotocol_CheckedChanged);
+            // 
             // frmUAVSensorControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1282, 718);
+            this.Controls.Add(this.cbowriteprotocol);
             this.Controls.Add(this.btReplay);
             this.Controls.Add(this.comboCameraType);
             this.Controls.Add(this.cbShowCompare);
@@ -1848,6 +1861,7 @@ namespace UAVSensorControl
         private System.Windows.Forms.CheckBox cbShowCompare;
         private System.Windows.Forms.ComboBox comboCameraType;
         private System.Windows.Forms.Button btReplay;
+        private System.Windows.Forms.CheckBox cbowriteprotocol;
     }
 }
 

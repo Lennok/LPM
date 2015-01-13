@@ -195,6 +195,12 @@ int VisualControl::setShowAllShapes(bool show)
 	}	
 	return 0;
 }
+
+int VisualControl::setWriteHtmlProtocol(bool write)
+{
+	writeHtmlProtocol = write;
+	return 0;
+}
 //int VisualControl::startPlatformDetection()
 //{
 //	if (!(mainLoopRunning==1))

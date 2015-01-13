@@ -97,6 +97,11 @@ int VisualControlWrapper::setShowAllShapes(bool show)
 	return this->visContrHandle->setShowAllShapes(show);
 }
 
+int VisualControlWrapper::setWriteHtmlProtocol(bool write)
+{
+	return this->visContrHandle->setWriteHtmlProtocol(write);
+}
+
 str_VisualData VisualControlWrapper::doDetection()
 {
 	str_VisualData data;

@@ -40,7 +40,7 @@ namespace VisualControlLib
 		int setShowSettings(bool show);
 		int setShowImage(bool show);
 		int setShowAllShapes(bool show);
-		
+		int setWriteHtmlProtocol(bool write);
 
 
 		//main loop
@@ -64,6 +64,7 @@ namespace VisualControlLib
 		bool showSettings;
 		bool showSingleImage;
 		bool showAllFigures;
+		bool writeHtmlProtocol;
 
 		//calculation parameter
 		double param1;

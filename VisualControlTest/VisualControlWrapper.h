@@ -53,6 +53,7 @@ namespace VisualControlLib
 		int setShowSettings(bool show);
 		int setShowImage(bool show);
 		int setShowAllShapes(bool show);
+		int setWriteHtmlProtocol(bool write);
 		
 		str_VisualData doDetection();
 		void setCalculationParams(str_CalibrationData calibrationData);
