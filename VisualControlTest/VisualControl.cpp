@@ -2300,7 +2300,7 @@ bool VisualControl::do_logging(bool iteration_needed)
 		fprintf(_fpLogfile, "\t\t\t\t<th>Figurenerkennung</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>Iteration benoetigt</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>Winkel berechnet</th>\n");
-		fprintf(_fpLogfile, "\t\t\t\t<th>Hoehe berechnet</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Entfernung berechnet</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>THR</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>CCOEF</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>MED</th>\n");
