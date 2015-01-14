@@ -66,6 +66,8 @@ VisualControl::VisualControl(int CameraIndex)
 	capture = NULL;
 	showAllFigures = false;
 
+	writeHtmlProtocol = false;
+
 }
 
 VisualControl::~VisualControl()
@@ -201,6 +203,11 @@ int VisualControl::setShowAllShapes(bool show)
 int VisualControl::setWriteHtmlProtocol(bool write)
 {
 	writeHtmlProtocol = write;
+
+	if (!write)
+	{
+		finish_logfile();
+	}
 	return 0;
 }
 //int VisualControl::startPlatformDetection()
@@ -2369,9 +2376,14 @@ bool VisualControl::finish_logfile()
 	{
 		return false;
 	}
+
 	fprintf(_fpLogfile, "\t\t</table>\n");
 	fprintf(_fpLogfile, "\t</body>\n");
 	fprintf(_fpLogfile, "</html>\n");
 
+	fclose(_fpLogfile);
+	_fpLogfile = NULL;
+
+	return true;
 }
 /// end private functions  //////////////////////////////////////////

@@ -1105,6 +1105,16 @@ namespace UAVSensorControl
             }
             catch { }
 
+            if (this.visualControl != null)
+            {
+                visualControl.setWriteHtmlProtocol(false);
+            }
+
+            if (this.visualControl2 != null)
+            {
+                visualControl2.setWriteHtmlProtocol(false);
+            }
+            
             DataFile.Close();
         }
        
