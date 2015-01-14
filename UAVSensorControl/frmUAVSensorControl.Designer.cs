@@ -1465,10 +1465,11 @@ namespace UAVSensorControl
             "Ergebnis zeigen",
             "Einstellungen zeigen",
             "Bild auswählen",
+            "Ordner auswählen",
             "Alle Figuren anzeigen"});
-            this.clbShowImage.Location = new System.Drawing.Point(1149, 110);
+            this.clbShowImage.Location = new System.Drawing.Point(1149, 95);
             this.clbShowImage.Name = "clbShowImage";
-            this.clbShowImage.Size = new System.Drawing.Size(121, 90);
+            this.clbShowImage.Size = new System.Drawing.Size(121, 105);
             this.clbShowImage.TabIndex = 13;
             this.clbShowImage.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.clbShowImage_ItemCheck);
             // 

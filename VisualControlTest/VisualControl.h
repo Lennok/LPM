@@ -39,6 +39,7 @@ namespace VisualControlLib
 		int setShowResultImage(bool show);
 		int setShowSettings(bool show);
 		int setShowImage(bool show);
+		int setProcessFolder(bool show);
 		int setShowAllShapes(bool show);
 		int setWriteHtmlProtocol(bool write);
 
@@ -63,6 +64,7 @@ namespace VisualControlLib
 		bool ShowResultImage;
 		bool showSettings;
 		bool showSingleImage;
+		bool processFolder;
 		bool showAllFigures;
 		bool writeHtmlProtocol;
 
@@ -73,6 +75,7 @@ namespace VisualControlLib
 		bool mlogVideo;
 		VideoWriter* outputVideo;
 		String logDirectory;
+		vector<std::wstring> imageNames;
 
 		//defines
 		string VisualControl::CANNY_WINDOW;
@@ -117,7 +120,9 @@ namespace VisualControlLib
 
 		/// Variables to save files
 		int counter;
+		int protocolWasSaved;
 		char filename[512];
+		int figureCount;
 
 
 		//Detect altitude
@@ -165,6 +170,8 @@ namespace VisualControlLib
 
 		bool do_logging(bool iteration_needed);
 		bool finish_logfile();
+
+		void GetPicturesInFolder();
 
 	};
 }

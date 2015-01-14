@@ -92,6 +92,11 @@ int VisualControlWrapper::setShowImage(bool show)
 	return this->visContrHandle->setShowImage(show);
 }
 
+int VisualControlWrapper::setProcessFolder(bool show)
+{
+	return this->visContrHandle->setProcessFolder(show);
+}
+
 int VisualControlWrapper::setShowAllShapes(bool show)
 {
 	return this->visContrHandle->setShowAllShapes(show);

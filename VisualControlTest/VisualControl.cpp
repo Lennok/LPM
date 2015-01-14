@@ -1,7 +1,7 @@
 ﻿#define _USE_MATH_DEFINES
 
 #include <math.h>
-
+#include <shlobj.h>  
 #include "VisualControl.h"
 
 #include <opencv2/core/core.hpp>
@@ -64,10 +64,12 @@ VisualControl::VisualControl(int CameraIndex)
 	SETTINGS_WINDOW = "Settings" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
 	cvNamedWindow("OutputHelper", CV_WINDOW_AUTOSIZE);
 	capture = NULL;
+	processFolder = false;
 	showAllFigures = false;
 
 	writeHtmlProtocol = false;
-
+	protocolWasSaved = false;
+	figureCount = 0;
 }
 
 VisualControl::~VisualControl()
@@ -142,6 +144,36 @@ int  VisualControl::setShowSettings(bool show)
 	return 0;
 }
 
+int VisualControl::setProcessFolder(bool show)
+{
+	processFolder = show;
+	if (show)
+	{
+		TCHAR path[MAX_PATH];
+		BROWSEINFO bi = { 0 };
+		bi.lpszTitle = L"All Folders Automatically Recursed.";
+		LPITEMIDLIST pidl = SHBrowseForFolder ( &bi );
+		if ( pidl != 0 )
+		{
+			// get the name of the folder and put it in path
+			SHGetPathFromIDList ( pidl, path );
+
+			//Set the current directory to path
+			SetCurrentDirectory ( path );
+
+			counter = 0;
+
+			GetPicturesInFolder();
+			
+			protocolWasSaved = false;
+		}
+		else
+		{
+			processFolder = false;	
+		}
+	}
+	return 0;
+}
 int VisualControl::setShowImage(bool show)
 {
 	showSingleImage = show;
@@ -166,15 +198,22 @@ int VisualControl::setShowImage(bool show)
 		{
 			std:wstring wideString (openFileDialog.lpstrFile);
 			mImageFile = std::string(wideString.begin(), wideString.end());
-			cv::Mat frame = cv::imread(mImageFile);
-			cv::resize(frame,original_single_frame, cv::Size(640, 480));
+			original_single_frame = cv::imread(mImageFile);
+			//cv::resize(frame,original_single_frame, cv::Size(640, 480));
 			//cv::resize(frame,original_single_frame, cv::Size(1280, 720));
 
-			frameHeight = 480;
-			frameWidth = 640;
-			//GoPro
-			/*	frameHeight = 720;
-			frameWidth = 1280;*/
+			frameHeight = original_single_frame.rows;
+			frameWidth = original_single_frame.cols;
+			if (original_single_frame.rows > 1500)
+			{
+				double scalar = 1500.0/original_single_frame.cols;
+				frameWidth = 1500;
+				frameHeight = original_single_frame.rows * scalar;
+				cv::resize(original_single_frame,original_single_frame, cv::Size(frameWidth, frameHeight));
+			}
+			
+			//add new Image to protocol
+			protocolWasSaved = false;
 		}
 		else
 		{
@@ -207,6 +246,14 @@ int VisualControl::setWriteHtmlProtocol(bool write)
 	if (!write)
 	{
 		finish_logfile();
+	}
+	else
+	{
+		if (processFolder)
+		{
+			counter = 0;
+		}
+		protocolWasSaved = false;
 	}
 	return 0;
 }
@@ -307,6 +354,7 @@ void VisualControl::processContours(Mat &frame)
 			shapes.push_back(temp);
 		}			
 	}
+	figureCount = shapes.size();
 	if (showAllFigures || writeHtmlProtocol)
 	{
 		///Draw shapes
@@ -394,7 +442,7 @@ void VisualControl::processContours(Mat frame, iteration_not_detected newPicture
 			cropShapes.push_back(temp);
 		}			
 	}
-
+	figureCount += cropShapes.size();
 	Shape temp;
 	temp.shapeArea = 0;
 	for (int i = 0; i < cropShapes.size(); i++)
@@ -506,7 +554,7 @@ void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPict
 			cropShapes.push_back(temp);
 		}			
 	}
-
+	figureCount += cropShapes.size();
 	Shape temp;
 	temp.shapeArea = 0;
 	for (int i = 0; i < cropShapes.size(); i++)
@@ -549,6 +597,8 @@ void  VisualControl::processContours(Mat frame, iteration_wrong_detected newPict
 
 		imshow("All Shapes", allFiguresFrame);
 	}	
+	
+
 }
 
 void VisualControl::processShapes() {
@@ -2117,9 +2167,6 @@ void VisualControl::doDetection()
 		frameWidth = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
 		frameHeight = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
 
-		//GoPro
-		/*	frameHeight = 720;
-			frameWidth = 1280;*/
 		frameHeight = 480;
 		frameWidth = 640;
 		//printf("[i] %.0f x %.0f\n", frameWidth, frameHeight);
@@ -2133,14 +2180,42 @@ void VisualControl::doDetection()
 	}
 	
 	/// get shot	
-	if (!showSingleImage)
+	if (!showSingleImage && !processFolder)
 	{	
 		working_frame = cvQueryFrame(capture);
 	}
-	else
+	else if(!processFolder)
 	{
 		working_frame = original_single_frame;
 	}
+	else
+	{		
+		if (counter < imageNames.size())
+		{
+			wstring wideString = imageNames[counter];
+			mImageFile = std::string(wideString.begin(), wideString.end());
+			working_frame = cv::imread(mImageFile);
+			//cv::resize(frame,original_single_frame, cv::Size(640, 480));
+			////cv::resize(frame,original_single_frame, cv::Size(1280, 720));
+
+			frameHeight = working_frame.rows;
+			frameWidth = working_frame.cols;
+
+			if (original_single_frame.rows > 1500)
+			{
+				double scalar = 1500.0/original_single_frame.cols;
+				frameWidth = 1500;
+				frameHeight = original_single_frame.rows * scalar;
+				cv::resize(original_single_frame,original_single_frame, cv::Size(frameWidth, frameHeight));
+			}
+			////GoPro
+			///*	frameHeight = 720;
+			//frameWidth = 1280;*/
+			counter++;
+		}
+		
+	}
+
 	//need else, when working_frame is changed!
 	if(working_frame.rows == 0 ||working_frame.cols==0 || working_frame.channels() != 3)
 	{
@@ -2198,7 +2273,27 @@ void VisualControl::doDetection()
 
 	if (writeHtmlProtocol)
 	{
-		do_logging(retVal->state != Success);
+		//Save every frame in video-mode
+		if (!showSingleImage && !processFolder) 
+		{
+			do_logging(retVal->state != Success);
+		}
+		//save just one pic when pic is selected
+		else if (showSingleImage && !protocolWasSaved)
+		{
+			do_logging(retVal->state != Success);
+			protocolWasSaved = true;
+		}
+		// folder
+		else if (processFolder && !protocolWasSaved)
+		{
+			do_logging(retVal->state != Success);
+			if (counter >= imageNames.size())
+			{
+				protocolWasSaved = true;
+			}
+		}
+		
 	}
 
 	delete retVal;
@@ -2207,7 +2302,34 @@ void VisualControl::doDetection()
 	//t = ((double)getTickCount() - t)/getTickFrequency();
 	//qDebug() << "Times passed in seconds: " << t;	
 }
-
+void VisualControl::GetPicturesInFolder()
+{
+	static int index = 0;
+	TCHAR path[MAX_PATH];
+	TCHAR search_path[200];
+	imageNames.clear();
+	GetCurrentDirectory(sizeof(path), path);
+	lstrcatW(path,L"\\");
+	wsprintf(search_path, L"%s*.jpg", path);
+	WIN32_FIND_DATA fd; 
+    HANDLE hFind = ::FindFirstFile(search_path, &fd); 
+	lstrcpy(search_path, path);
+	if(hFind != INVALID_HANDLE_VALUE) 
+    { 
+        do 
+        { 
+            // read all (real) files in current folder, delete '!' read other 2 default folder . and ..
+            if(! (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ) 
+            {
+				lstrcatW(path,fd.cFileName);
+				wstring temp(path);
+                imageNames.push_back(temp);
+				lstrcpy(path, search_path);
+            }
+        }while(::FindNextFile(hFind, &fd)); 
+        ::FindClose(hFind); 
+    } 
+}
 void VisualControl::setCalculationParams(double param1, double param2, double param3)
 {
 	this->param1 = param1;
@@ -2297,17 +2419,22 @@ bool VisualControl::do_logging(bool iteration_needed)
 
 		fprintf(_fpLogfile, "\t<body>\n");
 		fprintf(_fpLogfile, "\t\t<h3>Protokoll UAVControl mit Kamera: %s</h3>\n\n", (mCameraIndex == 0) ? "Flycam" : "GoPro");
-
+		fprintf(_fpLogfile, "\t\t Merkmale:<br>\n");
+		fprintf(_fpLogfile, "\t\t Kreis: Roundness &gt %.2f AND Sides = 8<br>\n", Shape::prototypesFeatures[3][0]/100.0);
+		fprintf(_fpLogfile, "\t\t Dreieck: Triangularity &gt %.2f AND Sides = 3<br>\n", Shape::prototypesFeatures[0][2]/100.0);
+		fprintf(_fpLogfile, "\t\t Quadrat: Rectangularity &gt %.2f AND (Sides == 4 ODER Sides == 5)<br>\n", Shape::prototypesFeatures[1][1]/100.0);
+		fprintf(_fpLogfile, "\t\t Hexagon: Sides = 6 ODER Sides = 7<br>\n");
 
 		fprintf(_fpLogfile, "\t\t<table border=\"1\">\n");
 		fprintf(_fpLogfile, "\t\t\t<thead>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>Original Bild</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>LPM - Erkennung</th>\n");
-		fprintf(_fpLogfile, "\t\t\t\t<th>Missing Erkennung</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>Figurenerkennung</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Missing Erkennung</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>Iteration benoetigt</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>Winkel berechnet</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>Entfernung berechnet</th>\n");
+		fprintf(_fpLogfile, "\t\t\t\t<th>Erkannte Figuren</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>THR</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>CCOEF</th>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<th>MED</th>\n");
@@ -2339,22 +2466,22 @@ bool VisualControl::do_logging(bool iteration_needed)
 
 	fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string ("Pictures\\") + string(current_time) + "_orig.jpg").c_str(), x_size, y_size);
 	fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string("Pictures\\") + string(current_time) + "_detection.jpg").c_str(), x_size, y_size);
+	fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string("Pictures\\") + string(current_time) + "_all_figs.jpg").c_str(), x_size, y_size);
 
 	if (iteration_needed)
 	{ 
 		fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string("Pictures\\") + string(current_time) + "_iteration_detection.jpg").c_str(), x_size, y_size);
-		fprintf(_fpLogfile, "\t\t\t\t<td><img src=\"%s\" width=\"%d\" height=\"%d\"\"/></td>\n", string(string("Pictures\\") + string(current_time) + "_all_figs.jpg").c_str(), x_size, y_size);
 		fprintf(_fpLogfile, "\t\t\t\t<td>true</td>\n");
 	}
 	else
 	{
-		fprintf(_fpLogfile, "\t\t\t\t<td></td>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<td></td>\n");
 		fprintf(_fpLogfile, "\t\t\t\t<td>false</td>\n");
 	}
 	
 	fprintf(_fpLogfile, "\t\t\t\t<td>%.3f</td>\n", mPlaformAngle);
 	fprintf(_fpLogfile, "\t\t\t\t<td>%.3f</td>\n", mPlatformAltitude);
+	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", figureCount);
 	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", thresh);
 	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", color_coeff);
 	fprintf(_fpLogfile, "\t\t\t\t<td>%d</td>\n", min_eucl_dist);

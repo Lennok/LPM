@@ -114,7 +114,6 @@ void Shape::calculateFeaturesForCropedFrame(std::vector<cv::Point> &contour, std
 				}
 			}
 		}
-		bool noHitMiddlePoint = false;
 
 		for (int i = 0; i < approx.size(); i++)
 		{
@@ -133,13 +132,12 @@ void Shape::calculateFeaturesForCropedFrame(std::vector<cv::Point> &contour, std
 			
 			//calc distance from contour to midpoint
 			double distance = cv::pointPolygonTest(approx1, midPoint, true);
-			if (abs(distance) > 5)
+			if (abs(distance) > 3)
 			{
-				noHitMiddlePoint = true;
-				break;
+				return;
 			}
 		}
-		if (wasErased && !noHitMiddlePoint)
+		if (wasErased)
 		{
 			cv::convexHull(approx, approx);
 		}

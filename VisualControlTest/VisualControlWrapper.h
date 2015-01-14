@@ -52,6 +52,7 @@ namespace VisualControlLib
 		int setShowResultImage(bool show);
 		int setShowSettings(bool show);
 		int setShowImage(bool show);
+		int setProcessFolder(bool show);
 		int setShowAllShapes(bool show);
 		int setWriteHtmlProtocol(bool write);
 		

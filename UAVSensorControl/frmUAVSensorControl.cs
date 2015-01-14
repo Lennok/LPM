@@ -1487,7 +1487,7 @@ namespace UAVSensorControl
                         visualControl2.setShowSettings(e.NewValue == CheckState.Checked ? true : false);
                     }
                     break;
-                case 4:
+                case 4:                    
                     //show saved image
                     visualControl.setShowImage(e.NewValue == CheckState.Checked ? true : false);
                     if (cbShowCompare.Checked)
@@ -1496,6 +1496,14 @@ namespace UAVSensorControl
                     }
                     break;
                 case 5:
+                    //process folders
+                    visualControl.setProcessFolder(e.NewValue == CheckState.Checked ? true : false);
+                    if (cbShowCompare.Checked)
+                    {
+                        visualControl2.setProcessFolder(e.NewValue == CheckState.Checked ? true : false);
+                    }
+                    break;
+                case 6:
                     //show saved image
                     visualControl.setShowAllShapes(e.NewValue == CheckState.Checked ? true : false);
                     if (cbShowCompare.Checked)
