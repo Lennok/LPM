@@ -164,6 +164,11 @@ int VisualControl::setProcessFolder(bool show)
 			counter = 0;
 
 			GetPicturesInFolder();
+
+			if (imageNames.size() == 0)
+			{
+				MessageBox(NULL,L"Es wurden keine .jpg Datei gefunden!",L"Information",MB_ICONINFORMATION);
+			}
 			
 			protocolWasSaved = false;
 		}
@@ -2290,6 +2295,7 @@ void VisualControl::doDetection()
 			do_logging(retVal->state != Success);
 			if (counter >= imageNames.size())
 			{
+				MessageBox(NULL,L"Protokoll fertig.\nCheckbox klicken um Vorgang zu beenden!",L"Information",MB_ICONINFORMATION);
 				protocolWasSaved = true;
 			}
 		}
@@ -2449,10 +2455,11 @@ bool VisualControl::do_logging(bool iteration_needed)
 	// dump all pcitures to file
 	time_t t = time(0);
 	struct tm * now = localtime(&t);
-
+	SYSTEMTIME time;
+	GetSystemTime(&time);
 	char current_time[100];
-	sprintf(current_time, "%4d-%02d-%02d_%02d-%02d-%02d", (now->tm_year + 1900), now->tm_mon + 1,
-		now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
+	sprintf(current_time, "%4d-%02d-%02d_%02d-%02d-%02d-%03d", (now->tm_year + 1900), now->tm_mon + 1,
+		now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec, time.wMilliseconds);
 
 	char picture_names[200];
 	
