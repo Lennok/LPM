@@ -26,12 +26,13 @@ namespace VisualControlLib
 
 	public value struct str_CalibrationData
 	{
-		double param1; double param2; double param3;
-		str_CalibrationData(double param1, double param2, double param3)
+		double param1; double param2; double param3; int param4;
+		str_CalibrationData(double param1, double param2, double param3, int param4)
 		{
 			this->param1 = param1;
 			this->param2 = param2;
 			this->param3 = param3;
+			this->param4 = param4;
 		}
 	};
 

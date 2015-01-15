@@ -56,6 +56,7 @@ VisualControl::VisualControl(int CameraIndex)
 	this->param1 = 0.0064;
 	this->param2 = 38.112;
 	this->param3 = 5;
+	this->param4 = 0;
 
 	//set window names
 	CANNY_WINDOW = "Canny_" + static_cast<ostringstream*>( &(ostringstream() << mCameraIndex) )->str();
@@ -2336,11 +2337,12 @@ void VisualControl::GetPicturesInFolder()
         ::FindClose(hFind); 
     } 
 }
-void VisualControl::setCalculationParams(double param1, double param2, double param3)
+void VisualControl::setCalculationParams(double param1, double param2, double param3, int param4)
 {
 	this->param1 = param1;
 	this->param2 = param2;
 	this->param3 = param3;
+	this->param4 = param4;
 }
 
 void VisualControl::setVideoLogging(bool log, String logDirectory)
@@ -2371,13 +2373,13 @@ bool VisualControl::do_logging(bool iteration_needed)
 	int x_size = 0;
 	int y_size = 0;
 
-	if (mCameraIndex == 0)
+	if (this->param4 == 0)
 	{
 		x_size = 320;
 		y_size = 240;
 	}
 
-	if (mCameraIndex == 1)
+	if (this->param4 == 1)
 	{
 		x_size = 320;
 		y_size = 180;
@@ -2424,7 +2426,7 @@ bool VisualControl::do_logging(bool iteration_needed)
 
 
 		fprintf(_fpLogfile, "\t<body>\n");
-		fprintf(_fpLogfile, "\t\t<h3>Protokoll UAVControl mit Kamera: %s</h3>\n\n", (mCameraIndex == 0) ? "Flycam" : "GoPro");
+		fprintf(_fpLogfile, "\t\t<h3>Protokoll UAVControl mit Kamera: %s</h3>\n\n", (this->param4 == 0) ? "Flycam" : "GoPro");
 		fprintf(_fpLogfile, "\t\t Merkmale:<br>\n");
 		fprintf(_fpLogfile, "\t\t Kreis: Roundness &gt %.2f AND Sides = 8<br>\n", Shape::prototypesFeatures[3][0]/100.0);
 		fprintf(_fpLogfile, "\t\t Dreieck: Triangularity &gt %.2f AND Sides = 3<br>\n", Shape::prototypesFeatures[0][2]/100.0);

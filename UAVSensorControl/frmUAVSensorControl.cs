@@ -117,8 +117,8 @@ namespace UAVSensorControl
         private bool requestOSDDone = true;
         private str_RadarData radarData;
         private CopterData copterData = new CopterData(50);
-        private str_CalibrationData calibrationData_FlyCam= new str_CalibrationData(0.0064,38.112,5);
-        private str_CalibrationData calibrationData_GoPro = new str_CalibrationData(0.0064, 29, 3);
+        private str_CalibrationData calibrationData_FlyCam= new str_CalibrationData(0.0064,38.112,5, 0);
+        private str_CalibrationData calibrationData_GoPro = new str_CalibrationData(0.0064, 29, 3, 1);
         private str_CalibrationData actualCalibration;
 
         public str_ExternControl ExternControl = new str_ExternControl(0);  //Strukt zum speichern der Werte die gesendet werden sollen

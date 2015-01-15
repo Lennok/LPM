@@ -30,7 +30,7 @@ namespace VisualControlLib
 		float PlatformOffsetY() const { return mPlatformOffsetY; };
 		float PlatformRelativeAltitude() const { return mPlatformRelativeAltitude; };
 		bool DataValid() const { return mDataValid; };
-		void setCalculationParams(double param1, double param2, double param3);
+		void setCalculationParams(double param1, double param2, double param3, int param4);
 		void setVideoLogging(bool log, String logDirectory);
 
 		int getMainLoopRunning();
@@ -72,6 +72,7 @@ namespace VisualControlLib
 		double param1;
 		double param2;
 		double param3;
+		int param4;
 		bool mlogVideo;
 		VideoWriter* outputVideo;
 		String logDirectory;

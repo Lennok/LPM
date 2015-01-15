@@ -122,7 +122,7 @@ str_VisualData VisualControlWrapper::doDetection()
 
 void VisualControlWrapper::setCalculationParams(str_CalibrationData calibrationData)
 {
-	this->visContrHandle->setCalculationParams(calibrationData.param1, calibrationData.param2, calibrationData.param3);
+	this->visContrHandle->setCalculationParams(calibrationData.param1, calibrationData.param2, calibrationData.param3, calibrationData.param4);
 }
 
 void VisualControlWrapper::setVideoLogging(bool log, System::String^ logDirectory)

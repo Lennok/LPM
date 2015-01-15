@@ -13,6 +13,7 @@ namespace UAVSensorControl
     public partial class frmCalibrate : Form
     {
         private VisualControlWrapper visualControl = null;
+        private str_CalibrationData data = new str_CalibrationData(0.0064,38.112,5, 0);
 
         public frmCalibrate(VisualControlWrapper visualControl, str_CalibrationData calibrationData)
         {
@@ -21,13 +22,13 @@ namespace UAVSensorControl
             tbParam1.Text = calibrationData.param1.ToString();
             tbParam2.Text = calibrationData.param2.ToString();
             tbParam3.Text = calibrationData.param3.ToString();
+            data.param4 = calibrationData.param4;
         }
 
         public void updateParams(double param1, double param2, double param3)
         {
             if (visualControl != null)
             {
-                str_CalibrationData data;
                 data.param1 = param1;
                 data.param2 = param2;
                 data.param3 = param3;
