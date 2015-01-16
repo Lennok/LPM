@@ -2201,9 +2201,6 @@ void VisualControl::doDetection()
 			wstring wideString = imageNames[counter];
 			mImageFile = std::string(wideString.begin(), wideString.end());
 			working_frame = cv::imread(mImageFile);
-			//cv::resize(frame,original_single_frame, cv::Size(640, 480));
-			////cv::resize(frame,original_single_frame, cv::Size(1280, 720));
-
 			frameHeight = working_frame.rows;
 			frameWidth = working_frame.cols;
 
@@ -2214,9 +2211,6 @@ void VisualControl::doDetection()
 				frameHeight = original_single_frame.rows * scalar;
 				cv::resize(original_single_frame,original_single_frame, cv::Size(frameWidth, frameHeight));
 			}
-			////GoPro
-			///*	frameHeight = 720;
-			//frameWidth = 1280;*/
 			counter++;
 		}
 		
@@ -2292,11 +2286,12 @@ void VisualControl::doDetection()
 		}
 		// folder
 		else if (processFolder && !protocolWasSaved)
-		{
+		{			
 			do_logging(retVal->state != Success);
-			if (counter >= imageNames.size())
+			if (counter == imageNames.size())
 			{
-				MessageBox(NULL,L"Protokoll fertig.\nCheckbox klicken um Vorgang zu beenden!",L"Information",MB_ICONINFORMATION);
+				finish_logfile();
+				MessageBox(NULL,L"Das Protokoll wurde erfolgreich angelegt.\n",L"Fertig",MB_ICONINFORMATION );
 				protocolWasSaved = true;
 			}
 		}
